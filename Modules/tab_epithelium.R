@@ -24,7 +24,7 @@ tab_epitheliumUI <- function(id) {
         flex: 1;
         display: flex;
         flex-direction: column;
-        min-height: 620px;
+        min-height: 660px;
       }
       .equal-height-row .box .box-body {
         flex: 1;
@@ -39,9 +39,15 @@ tab_epitheliumUI <- function(id) {
             title = "Gene Expression in Mammary Epithelium", status = "primary", solidHeader = TRUE, width = 12, padding = 0,
             fluidRow(
               column(3,
-                textInput(ns("epithelium_genes"), "Enter Gene Name:", 
-                         value = "Myh9",
-                         placeholder = "Type gene name (e.g., Myh9)...")
+                selectizeInput(ns("epithelium_genes"), "Enter Gene Name:", 
+                         choices = NULL,
+                         selected = "Myh9",
+                         options = list(
+                           placeholder = "Type gene name (e.g., Myh9)...",
+                           onInitialize = I('function() { this.setValue("Myh9"); }'),
+                           create = TRUE,
+                           maxItems = 1
+                         ))
               ),
               column(3,
                 selectInput(ns("selected_groups"), "Select Groups:",
@@ -62,26 +68,26 @@ tab_epitheliumUI <- function(id) {
                     actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary"))
               )
             ),
-            plotOutput(ns("epithelium_main_plot"), height = "550px")
+            plotOutput(ns("epithelium_main_plot"), height = "555px")
           )
         ),
         column(4, style = "padding-left: 7.5px;",
           box(
             title = "Study Information", status = "info", solidHeader = TRUE, width = 12,
               div(style = "text-align: left; display: flex; flex-direction: column; height: 100%;",
-              div(style = "text-align: center; margin-bottom: 2px;",
+              div(style = "text-align: center; margin-bottom: 0px;",
                 img(src = "JID_cover.png", width = "80%", style = "max-width: 100%; margin-bottom: 5px;"),
-                p(strong("Cover Feature (Image courtesy of Dr. Qiang Lan)"), style = "margin-bottom: 2px; font-size: 12px;")
-              ),
-              div(style = "margin-top: auto; padding-top: 2px;",
+                p(strong("Cover Featured (Image courtesy of Dr. Qiang Lan)"), style = "margin-bottom: 2px; font-size: 13px;")
+                ),
+                div(style = "margin-top: auto; padding-top: 2px;",
                 p("The study associated with this data has been published. Please refer to the following citation for more details:", 
-                  style = "font-size: 11px; margin-bottom: 8px; text-align: justify;"),
+                  style = "font-size: 12px; margin-bottom: 0px; text-align: justify;"),
                 p(em("\"Stabilization of Epithelial β-Catenin Compromises Mammary Cell Fate Acquisition and Branching Morphogenesis\""), 
                   " Satta JP, Lan Q, Taketo MM, Mikkola ML. ",
                   a("J Invest Dermatol. 2024;144(6):1223-1237.e10", href = "https://doi.org/10.1016/j.jid.2023.11.018", target = "_blank"),
-                  style = "font-size: 11px; margin-bottom: 8px; font-style: italic; text-align: left;"),
-                p("The data is also available at GEO with accession number: ", a("GSE236630", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE236630", target = "_blank"), style = "font-size: 11px; margin-bottom: 5px; text-align: left;")
-              )
+                  style = "font-size: 12px; margin-bottom: 2px; font-style: italic; text-align: left;"),
+                p("The data is also available at GEO with accession number: ", a("GSE236630", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE236630", target = "_blank"), style = "font-size: 12px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
+                )
               )
           )
         )
@@ -140,6 +146,13 @@ tab_epitheliumServer <- function(id) {
           # Cache the data
           cached_normalized_data(normalized_count)
           cached_deseq2_data(combined_results)
+          
+          # Update selectizeInput choices once data is loaded
+          available_genes <- sort(unique(normalized_count$external_gene_name))
+          updateSelectizeInput(session, "epithelium_genes", 
+                              choices = available_genes,
+                              selected = "Myh9",
+                              server = TRUE)
           
         }, error = function(e) {
           showNotification(paste("Error loading data files:", e$message), type = "error")
@@ -498,7 +511,7 @@ tab_epitheliumServer <- function(id) {
             
             p <- p + annotate("text", 
                              x = ann$x, 
-                             y = y_pos,
+                             y = y_pos + y_spacing * 0.2,
                              label = ann$label, 
                              size = 6, 
                              hjust = 0.5,
