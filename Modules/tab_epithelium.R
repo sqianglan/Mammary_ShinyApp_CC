@@ -38,7 +38,8 @@ tab_epitheliumUI <- function(id) {
           box(
             title = "Gene Expression in Mammary Epithelium", status = "primary", solidHeader = TRUE, width = 12, padding = 0,
             fluidRow(
-              column(3,
+              style = "align-items: center; margin-bottom: 8px; margin-left: -4px; margin-right: -4px;",
+              column(2, style = "padding-left: 4px; padding-right: 4px;",
                 selectizeInput(ns("epithelium_genes"), "Enter Gene Name:", 
                          choices = NULL,
                          selected = "Myh9",
@@ -49,7 +50,7 @@ tab_epitheliumUI <- function(id) {
                            maxItems = 1
                          ))
               ),
-              column(3,
+              column(3, style = "padding-left: 4px; padding-right: 4px;",
                 selectInput(ns("selected_groups"), "Select Groups:",
                        choices = list("E13.5 vs E16.5 WT" = "wt_comparison",
                              "E13.5 WT vs Stab ß-catenin" = "e13_comparison",
@@ -57,15 +58,33 @@ tab_epitheliumUI <- function(id) {
                              "All Groups" = "all_groups"),
                        selected = "all_groups")
               ),
-              column(3,
-                radioButtons(ns("plot_style"), "Statistical Test:",
-                            choices = list("t-test" = "ttest", "Wald test (DESeq2)" = "deseq2"),
-                            selected = "ttest",
-                            inline = TRUE)
+              column(3, style = "padding-left: 4px; padding-right: 4px;margin-right: -2px;",
+                tags$div(style = "display: flex; align-items: center; margin-bottom: 0; margin-top: 5px; gap: 8px; margin-left: 12px;",
+                  radioButtons(ns("plot_style"), label = "Statistical Test:",
+                               choices = list("t-test" = "ttest", "Wald test (DESeq2)" = "deseq2"),
+                               selected = "ttest",
+                               inline = TRUE,
+                               width = "auto")
+                )
               ),
-              column(3,
-                div(style = "margin-top: 25px;",
-                    actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary"))
+              column(2, style = "padding-left: 0px; padding-right: 20px; margin-top: 20px; margin-left: -2px;",
+                div(style = "display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-left: -2px;",
+                  actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary")
+                )
+              ),
+              column(1, style = "padding-left: 0px; padding-right: -2px; margin-left: 5px; margin-top: 20px;",
+                div(style = "display: flex; justify-content: flex-end; align-items: center; gap: 6px;",
+                  selectInput(ns("export_format"), NULL,
+                    choices = c("PDF" = "pdf", "SVG" = "svg", "PNG" = "png", "JPEG" = "jpeg"),
+                    selected = "pdf", width = "70px",
+                    selectize = FALSE
+                  )
+                )
+              ),
+              column(1, style = "padding-left: -5px; padding-right: 4px; margin-left: -2px; margin-top: 20px;",
+                div(style = "display: flex; justify-content: flex-end; align-items: center;",
+                  downloadButton(ns("download_plot"), label = NULL, icon = icon("download"), style = "margin-left: -2px; padding: 6px 10px; height: 34px;")
+                )
               )
             ),
             plotOutput(ns("epithelium_main_plot"), height = "555px")
@@ -103,60 +122,41 @@ tab_epitheliumUI <- function(id) {
   )
 }
 
-tab_epitheliumServer <- function(id) {
+tab_epitheliumServer <- function(id, parent_session) {
   moduleServer(id, function(input, output, session) {
     
-    # Create reactive value to track initial load
-    initial_load <- reactiveVal(FALSE)
-    
-    # Store cached data
+    # Store cached data and track states
     cached_normalized_data <- reactiveVal(NULL)
     cached_deseq2_data <- reactiveVal(NULL)
+    data_loaded <- reactiveVal(FALSE)
+    initial_load <- reactiveVal(FALSE)
+    show_loading <- reactiveVal(FALSE)
     
-    # Load data automatically when module initializes
-    observe({
-      # Only load once
-      if (is.null(cached_normalized_data()) && is.null(cached_deseq2_data())) {
-        tryCatch({
-          dds <- readRDS("rawData/Satta et al/Deseq_dds_normalized_matrix.rds")
-          gene_annotation <- readRDS("rawData/Satta et al/gene_annotation.rds")
-          sample_table <- read.csv("rawData/Satta et al/sampleTable.csv", stringsAsFactors = TRUE)
-          
-          # Convert to long format
-          normalized_count <- dds %>% 
-            as.data.frame() %>% 
-            .[unique(gene_annotation$ensembl_gene_id),] %>% 
-            rownames_to_column("ensembl_gene_id") %>% 
-            pivot_longer(., 2:ncol(.), names_to = "sample", values_to = "normalized_count") %>% 
-            merge(., sample_table[, c("sampleName", "group")], by.x = "sample", by.y = "sampleName") %>% 
-            mutate(group = factor(group, levels = c("E13.5_WT", "E13.5_Stab_bcat", "E16.5_WT", "E16.5_Stab_bcat"))) %>% 
-            merge(gene_annotation[, 1:2], by = "ensembl_gene_id")
-          
-          # Load DESeq2 data
-          e16_vs_e13 <- read.csv("rawData/Satta et al/24_group_E16.5_WT_vs_E13.5_WT_LFC_shrinkaged.csv")
-          e13_stab_vs_wt <- read.csv("rawData/Satta et al/20_group_E13.5_Stab_bcat_vs_E13.5_WT_LFC_shrinkaged.csv")
-          e16_stab_vs_wt <- read.csv("rawData/Satta et al/28_group_E16.5_Stab_bcat_vs_E16.5_WT_LFC_shrinkaged.csv")
-          
-          # Combine results
-          e16_vs_e13$comparison <- "E16.5_WT_vs_E13.5_WT"
-          e13_stab_vs_wt$comparison <- "E13.5_Stab_bcat_vs_E13.5_WT"
-          e16_stab_vs_wt$comparison <- "E16.5_Stab_bcat_vs_E16.5_WT"
-          combined_results <- rbind(e16_vs_e13, e13_stab_vs_wt, e16_stab_vs_wt)
-          
-          # Cache the data
-          cached_normalized_data(normalized_count)
-          cached_deseq2_data(combined_results)
-          
-          # Update selectizeInput choices once data is loaded
-          available_genes <- sort(unique(normalized_count$external_gene_name))
-          updateSelectizeInput(session, "epithelium_genes", 
-                              choices = available_genes,
-                              selected = "Myh9",
-                              server = TRUE)
-          
-        }, error = function(e) {
-          showNotification(paste("Error loading data files:", e$message), type = "error")
-        })
+    # Detect when epithelium tab is accessed and trigger loading
+    observeEvent(parent_session$input$tabs, {
+      cat("Tab changed to:", parent_session$input$tabs, "\n")  # Debug line
+      if (parent_session$input$tabs == "epithelium" && !data_loaded()) {
+        cat("Epithelium tab accessed - showing loading message\n")
+        show_loading(TRUE)
+        showModal(modalDialog(
+          tags$div(
+            style = "display: flex; align-items: center; gap: 18px; padding: 10px 0;",
+            tags$div(
+              class = "fa fa-spinner fa-spin",
+              style = "font-size: 38px; color: #337ab7;"
+            ),
+            tags$div(
+              tags$h4("Loading Data", style = "margin: 0 0 6px 0; font-weight: bold; color: #337ab7;"),
+              tags$p(
+                "Loading Epithelium RNAseq data... Please wait while we prepare the gene expression data.",
+                style = "font-size: 16px; margin: 0; color: #333;"
+              )
+            )
+          ),
+          footer = NULL,
+          easyClose = FALSE,
+          size = "m"
+        ))
       }
     })
     
@@ -253,6 +253,9 @@ tab_epitheliumServer <- function(id) {
       df_mean <- selected_count %>% 
         group_by(group, external_gene_name) %>% 
         summarise(mean = mean(normalized_count), std = sd(normalized_count), .groups = 'drop')
+      
+      # Get gene name from the data
+      current_gene_name <- unique(selected_count$external_gene_name)[1]
       
       # Merge with original data
       df_plotting_with_std <- merge(selected_count, df_mean, by = c('external_gene_name', 'group')) %>% 
@@ -397,6 +400,93 @@ tab_epitheliumServer <- function(id) {
     
     # Main expression plot
     output$epithelium_main_plot <- renderPlot({
+      # Show loading message if explicitly set to show loading
+      if (show_loading()) {
+        cat("Displaying loading message - show_loading():", show_loading(), "\n")
+        
+        # Start data loading in background only if not already started
+        if (is.null(cached_normalized_data())) {
+          cat("Starting background data loading...\n")
+          
+          # Use a delayed observer to load data
+          observe({
+            if (show_loading() && is.null(cached_normalized_data())) {
+              cat("Loading data in background observer...\n")
+              
+              tryCatch({
+                dds <- readRDS("rawData/Satta et al/Deseq_dds_normalized_matrix.rds")
+                gene_annotation <- readRDS("rawData/Satta et al/gene_annotation.rds")
+                sample_table <- read.csv("rawData/Satta et al/sampleTable.csv", stringsAsFactors = TRUE)
+            
+                # Convert to long format
+                normalized_count <- dds %>% 
+                  as.data.frame() %>% 
+                  .[unique(gene_annotation$ensembl_gene_id),] %>% 
+                  rownames_to_column("ensembl_gene_id") %>% 
+                  pivot_longer(., 2:ncol(.), names_to = "sample", values_to = "normalized_count") %>% 
+                  merge(., sample_table[, c("sampleName", "group")], by.x = "sample", by.y = "sampleName") %>% 
+                  mutate(group = factor(group, levels = c("E13.5_WT", "E13.5_Stab_bcat", "E16.5_WT", "E16.5_Stab_bcat"))) %>% 
+                  merge(gene_annotation[, 1:2], by = "ensembl_gene_id")
+                
+                # Load DESeq2 data
+                e16_vs_e13 <- read.csv("rawData/Satta et al/24_group_E16.5_WT_vs_E13.5_WT_LFC_shrinkaged.csv")
+                e13_stab_vs_wt <- read.csv("rawData/Satta et al/20_group_E13.5_Stab_bcat_vs_E13.5_WT_LFC_shrinkaged.csv")
+                e16_stab_vs_wt <- read.csv("rawData/Satta et al/28_group_E16.5_Stab_bcat_vs_E16.5_WT_LFC_shrinkaged.csv")
+                
+                # Combine results
+                e16_vs_e13$comparison <- "E16.5_WT_vs_E13.5_WT"
+                e13_stab_vs_wt$comparison <- "E13.5_Stab_bcat_vs_E13.5_WT"
+                e16_stab_vs_wt$comparison <- "E16.5_Stab_bcat_vs_E16.5_WT"
+                combined_results <- rbind(e16_vs_e13, e13_stab_vs_wt, e16_stab_vs_wt)
+                
+                # Cache the data
+                cached_normalized_data(normalized_count)
+                cached_deseq2_data(combined_results)
+                
+                # Update selectizeInput choices once data is loaded
+                available_genes <- sort(unique(normalized_count$external_gene_name))
+                updateSelectizeInput(session, "epithelium_genes", 
+                                    choices = available_genes,
+                                    selected = "Myh9",
+                                    server = TRUE)
+                
+                # Mark data as loaded and hide loading message
+                data_loaded(TRUE)
+                show_loading(FALSE)
+                removeModal()  # Remove the loading modal
+                cat("Data loading completed - hiding loading message\n")
+                
+              }, error = function(e) {
+                cat("Error during data loading:", e$message, "\n")
+                data_loaded(TRUE)
+                show_loading(FALSE)
+                removeModal()  # Remove the modal if error occurs
+              })
+            }
+          })
+        }
+        
+        # Return the loading plot
+        return(ggplot() + 
+               annotate("text", x = 0.5, y = 0.5, 
+                       label = "Loading Epithelium RNAseq data...\nPlease wait while we prepare the gene expression data.", 
+                       size = 12, color = "#337ab7", hjust = 0.5, vjust = 0.5, fontface = "bold") +
+               theme_void() +
+               theme(plot.margin = margin(50, 50, 50, 50)) +
+               xlim(0, 1) + ylim(0, 1))
+      }
+      
+      # Show default loading message when data is not loaded (fallback)
+      if (!data_loaded()) {
+        return(ggplot() + 
+               annotate("text", x = 0.5, y = 0.5, 
+                       label = "Loading data, please wait...", 
+                       size = 8, color = "#337ab7") +
+               theme_void() +
+               theme(plot.margin = margin(50, 50, 50, 50)) +
+               xlim(0, 1) + ylim(0, 1))
+      }
+      
       data <- plotting_data()
       
       # Handle data loading state
@@ -441,7 +531,11 @@ tab_epitheliumServer <- function(id) {
       p <- create_base_plot(data)
       
       # Get the gene name for the title
-      gene_name <- as.character(unique(data$external_gene_name)[1])
+      gene_name <- if (!is.null(input$epithelium_genes) && input$epithelium_genes != "") {
+        as.character(input$epithelium_genes)
+      } else {
+        as.character(unique(data$external_gene_name)[1])
+      }
       
       # Add different styling based on user selection
       if (input$plot_style == "ttest") {
@@ -547,6 +641,61 @@ tab_epitheliumServer <- function(id) {
       
       return(p)
     })
+
+    # Download handler for exporting the plot
+    output$download_plot <- downloadHandler(
+      filename = function() {
+        gene <- if (!is.null(input$epithelium_genes) && input$epithelium_genes != "") input$epithelium_genes else "plot"
+        ext <- switch(input$export_format, pdf = ".pdf", svg = ".svg", png = ".png", jpeg = ".jpeg", ".pdf")
+        paste0(gene, "_epithelium_expression", ext)
+      },
+      content = function(file) {
+        data <- plotting_data()
+        if (is.null(data) || ("error" %in% names(data)) || nrow(data) == 0) {
+          # Create a blank plot if no data
+          p <- ggplot() + theme_void() + annotate("text", x = 0.5, y = 0.5, label = "No data to export", size = 8, color = "red")
+        } else {
+          p <- create_base_plot(data)
+          gene_name <- if (!is.null(input$epithelium_genes) && input$epithelium_genes != "") {
+            as.character(input$epithelium_genes)
+          } else {
+            as.character(unique(data$external_gene_name)[1])
+          }
+          # Add the same title logic as in the main plot
+          title_suffix <- switch(input$selected_groups,
+            "wt_comparison" = "(E13.5 vs E16.5 WT)",
+            "e13_comparison" = "(E13.5: WT vs Stab ß-catenin)",
+            "e16_comparison" = "(E16.5: WT vs Stab ß-catenin)",
+            "all_groups" = "(All Groups)",
+            "(Multiple Groups)" # default fallback
+          )
+          if (input$plot_style == "ttest") {
+            p <- p + ggtitle(paste0(gene_name, " Expression ", title_suffix, "\n(t-test)")) +
+              theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+          } else if (input$plot_style == "deseq2") {
+            p <- p + ggtitle(paste0(gene_name, " Expression ", title_suffix, "\n(DESeq2 Wald Test)")) +
+              theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+          }
+        }
+        # Set width/height for export
+        width <- 8
+        height <- 6
+        dpi <- 300
+        # Save in selected format
+        fmt <- input$export_format
+        if (fmt == "pdf") {
+          ggsave(file, plot = p, device = cairo_pdf, width = width, height = height)
+        } else if (fmt == "svg") {
+          ggsave(file, plot = p, device = svg, width = width, height = height)
+        } else if (fmt == "png") {
+          ggsave(file, plot = p, device = "png", width = width, height = height, dpi = dpi)
+        } else if (fmt == "jpeg") {
+          ggsave(file, plot = p, device = "jpeg", width = width, height = height, dpi = dpi)
+        } else {
+          ggsave(file, plot = p, device = cairo_pdf, width = width, height = height)
+        }
+      }
+    )
     
     # Load DESeq2 comparison tables for the data tables
     deseq_comparisons <- reactive({
