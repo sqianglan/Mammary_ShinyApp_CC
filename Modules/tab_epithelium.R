@@ -59,19 +59,22 @@ tab_epitheliumUI <- function(id) {
                              "All Groups" = "all_groups"),
                        selected = "all_groups")
               ),
-              column(3, style = "padding-left: 5px; padding-right: 2px;",
-                radioButtons(ns("plot_style"), "Statistical Test:",
-                            choices = list("t-test" = "ttest", "Wald test (DESeq2)" = "deseq2"),
-                            selected = "ttest",
-                            inline = TRUE)
-              ),
-              column(4, style = "padding-left: 2px; padding-right: 2px;",
-                div(style = "display: flex; justify-content: flex-end; align-items: center; gap: 6px;",
-                  actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary"),
-                  actionButton(ns("export_dialog"), "Export Plot", icon = icon("download"), 
-                              class = "btn-success", style = "padding: 6px 12px; height: 34px;")
+              column(3, style = "padding-left: 20px; padding-right: 2px;",
+                div(
+                  tags$label("Statistical Test:", style = "margin-bottom: 10px; display: block; font-weight: bold;"),
+                  radioButtons(ns("plot_style"), label = NULL,
+                              choices = list("t-test" = "ttest", "Wald test (DESeq2)" = "deseq2"),
+                              selected = "ttest",
+                              inline = TRUE)
                 )
-              )
+              ),
+                column(4, style = "padding-left: 2px; padding-right: 2px; ",
+                div(style = "display: flex; justify-content: flex-end; align-items: center; gap: 35px; margin-top: 25px;",
+                    actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary"),
+                    actionButton(ns("export_dialog"), "Export Plot", icon = icon("download"), 
+                        class = "btn-success", style = "padding: 6px 12px; height: 34px;")
+                )
+                )
             ),
             plotOutput(ns("epithelium_main_plot"), height = "555px")
           )
