@@ -33,13 +33,13 @@ tab_epitheliumUI <- function(id) {
     
     # Main content
     fluidRow(class = "equal-height-row",
-        column(8, style = "padding-right: 7.5px;",
+        column(8, style = "padding-right: 3.5px;",
           # Combined Gene Expression Analysis and Plot box
           box(
             title = "Gene Expression in Mammary Epithelium", status = "primary", solidHeader = TRUE, width = 12, padding = 0,
             fluidRow(
               style = "align-items: center; margin-bottom: 8px; margin-left: -2px; margin-right: -2px;",
-              column(3,
+              column(2,
                 style = "padding-left: 2px; padding-right: 2px;",
                 selectizeInput(ns("epithelium_genes"), "Enter Gene Name:", 
                          choices = NULL,
@@ -51,7 +51,7 @@ tab_epitheliumUI <- function(id) {
                            maxItems = 1
                          ))
               ),
-              column(2, style = "padding-left: 2px; padding-right: 2px;",
+              column(3, style = "padding-left: 2px; padding-right: 2px;",
                 selectInput(ns("selected_groups"), "Select Groups:",
                        choices = list("E13.5 vs E16.5 WT" = "wt_comparison",
                              "E13.5 WT vs Stab ß-catenin" = "e13_comparison",
@@ -79,13 +79,13 @@ tab_epitheliumUI <- function(id) {
             plotOutput(ns("epithelium_main_plot"), height = "555px")
           )
         ),
-        column(4, style = "padding-left: 7.5px;",
+        column(4, style = "padding-left: 3.5px;",
           box(
             title = "Study Information", status = "info", solidHeader = TRUE, width = 12,
               div(style = "text-align: left; display: flex; flex-direction: column; height: 100%;",
-              div(style = "text-align: center; margin-bottom: 0px;",
-                img(src = "JID_cover.png", width = "80%", style = "max-width: 100%; margin-bottom: 5px;"),
-                p(strong("Cover Featured (Image courtesy of Dr. Qiang Lan)"), style = "margin-bottom: 2px; font-size: 13px;")
+              div(style = "text-align: center; margin-bottom: 0px;  margin-top: 5px;",
+                img(src = "JID_cover.png", width = "80%", style = "max-width: 100%; margin-bottom: 4px;"),
+                p(strong("Cover Featured (Imaged by Dr. Qiang Lan)"), style = "margin-bottom: 2px; font-size: 13px;")
                 ),
                 div(style = "margin-top: auto; padding-top: 2px;",
                 p("The study associated with this data has been published. Please refer to the following citation for more details:", 
@@ -102,7 +102,7 @@ tab_epitheliumUI <- function(id) {
       ),
       fluidRow(
         tabBox(
-          title = "Data Tables", width = 12,
+          title = "Differential Expression Analysis by DESeq2", width = 12,
           tabPanel("E13.5 vs E16.5 WT", DT::dataTableOutput(ns("deseq_table1"))),
           tabPanel("E13.5 Stab ß-catenin vs WT", DT::dataTableOutput(ns("deseq_table2"))),
           tabPanel("E16.5 Stab ß-catenin vs WT", DT::dataTableOutput(ns("deseq_table3")))
@@ -153,8 +153,6 @@ tab_epitheliumServer <- function(id, parent_session) {
     
     # Export functionality with simple modal dialog
     observeEvent(input$export_dialog, {
-      cat("Export dialog button clicked\n")
-      
       # Check if we have a plot to export
       if (is.null(plotting_data()) || ("error" %in% names(plotting_data())) || nrow(plotting_data()) == 0) {
         showNotification("No plot available to export", type = "error", duration = 3)
@@ -167,7 +165,7 @@ tab_epitheliumServer <- function(id, parent_session) {
       # Show export options modal
       showModal(modalDialog(
         title = "Export Plot",
-        size = "m",
+        size = "s",
         fluidRow(
           column(12,
             textInput(ns("export_filename"), "File Name:", value = default_filename),
@@ -208,26 +206,19 @@ tab_epitheliumServer <- function(id, parent_session) {
     
     # Handle directory selection
     observeEvent(input$choose_directory, {
-      cat("Choose Directory button clicked\n")
-      
       tryCatch({
         if (Sys.info()["sysname"] == "Darwin") {  # macOS
-          cat("Running AppleScript for folder selection...\n")
           # Use AppleScript to choose folder on macOS
           script <- 'choose folder with prompt "Choose Export Directory"'
-          cat("AppleScript command:", script, "\n")
           
           result <- system(paste0('osascript -e \'', script, '\''), intern = TRUE)
-          cat("AppleScript result:", result, "\n")
           
           if (length(result) > 0 && result != "" && !grepl("User canceled", result)) {
             chosen_dir <- trimws(result)
-            cat("Raw chosen directory:", chosen_dir, "\n")
             
             # Clean up the AppleScript result
             if (startsWith(chosen_dir, "alias ")) {
               chosen_dir <- substring(chosen_dir, 7)  # Remove "alias " prefix
-              cat("After removing 'alias' prefix:", chosen_dir, "\n")
             }
             
             # Convert from HFS path to POSIX path
@@ -236,12 +227,10 @@ tab_epitheliumServer <- function(id, parent_session) {
               # Remove "Macintosh HD:" prefix if present and replace colons with slashes
               if (startsWith(chosen_dir, "Macintosh HD:")) {
                 chosen_dir <- substring(chosen_dir, 14)  # Remove "Macintosh HD:" prefix
-                cat("After removing 'Macintosh HD:' prefix:", chosen_dir, "\n")
               }
               
               # Replace all colons with forward slashes
               chosen_dir <- gsub(":", "/", chosen_dir)
-              cat("After replacing colons with slashes:", chosen_dir, "\n")
               
               # Add leading slash to make it absolute
               if (!startsWith(chosen_dir, "/")) {
@@ -252,14 +241,9 @@ tab_epitheliumServer <- function(id, parent_session) {
               if (endsWith(chosen_dir, "/") && nchar(chosen_dir) > 1) {
                 chosen_dir <- substring(chosen_dir, 1, nchar(chosen_dir) - 1)
               }
-              
-              cat("After HFS to POSIX conversion:", chosen_dir, "\n")
             }
             
             selected_export_dir(chosen_dir)
-            cat("Final directory selected:", chosen_dir, "\n")
-          } else {
-            cat("Directory selection cancelled or failed\n")
           }
         } else {
           # Use utils::choose.dir() for Windows/Linux
@@ -267,11 +251,9 @@ tab_epitheliumServer <- function(id, parent_session) {
           
           if (!is.null(chosen_dir) && chosen_dir != "") {
             selected_export_dir(chosen_dir)
-            cat("Directory selected:", chosen_dir, "\n")
           }
         }
       }, error = function(e) {
-        cat("Directory selection error:", e$message, "\n")
         showNotification(
           paste("Directory selection failed:", e$message),
           type = "warning",
@@ -357,14 +339,12 @@ tab_epitheliumServer <- function(id, parent_session) {
     
     # Test basic button functionality  
     observeEvent(input$update_plot, {
-      cat("Update plot button clicked - this should work!\n")
+      # This should work - basic button test
     })
     
     # Detect when epithelium tab is accessed and trigger loading
     observeEvent(parent_session$input$tabs, {
-      cat("Tab changed to:", parent_session$input$tabs, "\n")  # Debug line
       if (parent_session$input$tabs == "epithelium" && !data_loaded()) {
-        cat("Epithelium tab accessed - showing loading message\n")
         show_loading(TRUE)
         showModal(modalDialog(
           tags$div(
@@ -630,16 +610,11 @@ tab_epitheliumServer <- function(id, parent_session) {
     output$epithelium_main_plot <- renderPlot({
       # Show loading message if explicitly set to show loading
       if (show_loading()) {
-        cat("Displaying loading message - show_loading():", show_loading(), "\n")
-        
         # Start data loading in background only if not already started
         if (is.null(cached_normalized_data())) {
-          cat("Starting background data loading...\n")
-          
           # Use a delayed observer to load data
           observe({
             if (show_loading() && is.null(cached_normalized_data())) {
-              cat("Loading data in background observer...\n")
               
               tryCatch({
                 dds <- readRDS("rawData/Satta et al/Deseq_dds_normalized_matrix.rds")
@@ -682,10 +657,10 @@ tab_epitheliumServer <- function(id, parent_session) {
                 data_loaded(TRUE)
                 show_loading(FALSE)
                 removeModal()  # Remove the loading modal
-                cat("Data loading completed - hiding loading message\n")
+                
                 
               }, error = function(e) {
-                cat("Error during data loading:", e$message, "\n")
+               
                 data_loaded(TRUE)
                 show_loading(FALSE)
                 removeModal()  # Remove the modal if error occurs
@@ -854,9 +829,9 @@ tab_epitheliumServer <- function(id, parent_session) {
                 # Only draw brackets if the groups are not adjacent (to avoid overcrowding)
                 if (abs(x2 - x1) > 0.5) {
                   p <- p + 
-                    annotate("segment", x = x1, xend = x2, y = bracket_y, yend = bracket_y, size = 0.5) +
-                    annotate("segment", x = x1, xend = x1, y = bracket_y - y_spacing * 0.1, yend = bracket_y, size = 0.5) +
-                    annotate("segment", x = x2, xend = x2, y = bracket_y - y_spacing * 0.1, yend = bracket_y, size = 0.5)
+                    annotate("segment", x = x1, xend = x2, y = bracket_y, yend = bracket_y, linewidth = 0.5) +
+                    annotate("segment", x = x1, xend = x1, y = bracket_y - y_spacing * 0.1, yend = bracket_y, linewidth = 0.5) +
+                    annotate("segment", x = x2, xend = x2, y = bracket_y - y_spacing * 0.1, yend = bracket_y, linewidth = 0.5)
                 }
               }
             }
