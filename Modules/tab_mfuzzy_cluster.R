@@ -26,31 +26,10 @@ tab_mfuzzy_clusterUI <- function(id) {
         ),
         column(4,
           div(style = "text-align: center; padding: 10px;",
-            h4("Cluster Analysis Workflow", style = "margin-bottom: 10px; color: #337ab7;"),
-            img(src = "mFuzzy_sample_selection.png", width = "100%", 
-                style = "margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;"),
-            p("Sample selection for mFuzzy clustering analysis", 
-              style = "font-size: 12px; color: #666; margin-bottom: 8px; font-weight: bold;"),
-            p("Differential expressed (FC >1.5, padj <0.05, readcounts >200) extracellular matrix and ligand genes from multiple databases were extracted for Mfuzz analysis (644 total).", 
-              style = "font-size: 10px; color: #555; margin-bottom: 10px;")
-          )
-        )
-      )
-    ),
-    tabPanel("Cluster Visualization",
-      fluidRow(
-        column(6,
-          div(style = "text-align: center; padding: 10px;",
-            h4("Compiled Heatmap", style = "margin-bottom: 15px; color: #337ab7;"),
-            img(src = "46_mFuzzy_complied_heatmap.png", width = "100%", 
-                style = "border: 1px solid #ddd; border-radius: 5px;")
-          )
-        ),
-        column(6,
-          div(style = "text-align: center; padding: 10px;",
-            h4("Clustering Analysis (k=9, seed=20)", style = "margin-bottom: 15px; color: #337ab7;"),
-            img(src = "51_clustering_with_Mfuzz_k9_seed20_core_plottinig.png", width = "100%", 
-                style = "border: 1px solid #ddd; border-radius: 5px;")
+            div(style = "margin-bottom: 15px;",
+              uiOutput(ns("dynamic_buttons"))
+            ),
+            uiOutput(ns("dynamic_image_panel"))
           )
         )
       )
@@ -60,6 +39,9 @@ tab_mfuzzy_clusterUI <- function(id) {
 
 tab_mfuzzy_clusterServer <- function(id) {
   moduleServer(id, function(input, output, session) {
+    
+    # Store the namespace function
+    ns <- session$ns
     
     # Load mFuzzy cluster data
     mfuzzy_data <- reactive({
@@ -148,6 +130,76 @@ tab_mfuzzy_clusterServer <- function(id) {
           ),
           rownames = FALSE,
           caption = "mFuzzy Cluster Genes (k=9, seed=20)"
+        )
+      }
+    })
+    
+    # Image state for three-way switching
+    image_state <- reactiveVal("selected_data")  # Start with selected data view
+    
+    # Dynamic buttons with active styling
+    output$dynamic_buttons <- renderUI({
+      current_state <- image_state()
+      
+      div(style = "display: flex; justify-content: center; gap: 5px; flex-wrap: wrap;",
+        actionButton(ns("btn_selected_data"), "Selected Data", 
+                    style = paste0("border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; margin: 2px; ",
+                                  if(current_state == "selected_data") "background-color: #337ab7; color: white;" else "background-color: #6c757d; color: white;")),
+        actionButton(ns("btn_clustering"), "Clustering Results", 
+                    style = paste0("border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; margin: 2px; ",
+                                  if(current_state == "clustering") "background-color: #337ab7; color: white;" else "background-color: #6c757d; color: white;")),
+        actionButton(ns("btn_heatmap"), "Heatmap", 
+                    style = paste0("border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; margin: 2px; ",
+                                  if(current_state == "heatmap") "background-color: #337ab7; color: white;" else "background-color: #6c757d; color: white;"))
+      )
+    })
+    
+    # Handle button clicks and update button styles
+    observeEvent(input$btn_selected_data, {
+      image_state("selected_data")
+    })
+    
+    observeEvent(input$btn_clustering, {
+      image_state("clustering")
+    })
+    
+    observeEvent(input$btn_heatmap, {
+      image_state("heatmap")
+    })
+    
+    # Dynamic image panel output
+    output$dynamic_image_panel <- renderUI({
+      current_state <- image_state()
+      
+      if (current_state == "selected_data") {
+        div(
+          h4("Cluster Analysis Workflow", style = "margin-bottom: 10px; color: #337ab7;"),
+          img(src = "mFuzzy_sample_selection.png", width = "100%", 
+              style = "margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;"),
+          p("Sample selection for mFuzzy clustering analysis", 
+            style = "font-size: 12px; color: #666; margin-bottom: 8px; font-weight: bold;"),
+          p("Differential expressed (FC >1.5, padj <0.05, readcounts >200) extracellular matrix and ligand genes from multiple databases were extracted for Mfuzz analysis (644 total).", 
+            style = "font-size: 10px; color: #555; margin-bottom: 10px;")
+        )
+      } else if (current_state == "clustering") {
+        div(
+          h4("Clustering Analysis (k=9, seed=20)", style = "margin-bottom: 10px; color: #337ab7;"),
+          img(src = "51_clustering_with_Mfuzz_k9_seed20_core_plottinig.png", width = "100%", 
+              style = "margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;"),
+          p("mFuzzy clustering results", 
+            style = "font-size: 12px; color: #666; margin-bottom: 8px; font-weight: bold;"),
+          p("Clustering analysis showing temporal expression patterns across developmental stages with k=9 clusters and seed=20.", 
+            style = "font-size: 10px; color: #555; margin-bottom: 10px;")
+        )
+      } else {  # heatmap
+        div(
+          h4("Compiled Heatmap", style = "margin-bottom: 10px; color: #337ab7;"),
+          img(src = "46_mFuzzy_complied_heatmap.png", width = "100%", 
+              style = "margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;"),
+          p("Compiled heatmap visualization", 
+            style = "font-size: 12px; color: #666; margin-bottom: 8px; font-weight: bold;"),
+          p("Heatmap showing expression patterns of selected genes across different developmental stages and tissue types.", 
+            style = "font-size: 10px; color: #555; margin-bottom: 10px;")
         )
       }
     })
