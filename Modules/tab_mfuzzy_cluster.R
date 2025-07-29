@@ -194,11 +194,11 @@ tab_mfuzzy_clusterServer <- function(id) {
       } else {  # heatmap
         div(
           h4("Compiled Heatmap", style = "margin-bottom: 10px; color: #337ab7;"),
-          img(src = "46_mFuzzy_complied_heatmap.png", width = "100%", 
+          img(src = "46_mFuzzy_complied_heatmap.png", width = "80%", 
               style = "margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;"),
           p("Compiled heatmap visualization", 
             style = "font-size: 12px; color: #666; margin-bottom: 8px; font-weight: bold;"),
-          p("Heatmap showing expression patterns of selected genes across different developmental stages and tissue types.", 
+          p("Heatmap showing expression patterns of mFuzzy clustered genes across different developmental stages and tissue types.", 
             style = "font-size: 10px; color: #555; margin-bottom: 10px;")
         )
       }
