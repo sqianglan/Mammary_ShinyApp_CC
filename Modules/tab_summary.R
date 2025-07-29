@@ -1,10 +1,13 @@
 library(shiny)
+library(shinyjs)
+library(shinyBS)
 library(DT)
 
 tab_summaryUI <- function(id) {
   ns <- NS(id)
   
   fluidPage(
+    
     # Top section with logo
     fluidRow(
       column(9,
@@ -20,6 +23,10 @@ tab_summaryUI <- function(id) {
     fluidRow(
       box(
         title = "Project Overview", status = "primary", solidHeader = TRUE, width = 12,
+        div(style = "text-align: center; margin-bottom: 20px;",
+          img(src = "Embryonic mamamry gland development-v3_E10-E19.png", width = "80%", alt = "Embryonic Mammary Gland Development E10-E19")
+        ),
+        p("The mammary gland is a unique organ that undergoes dynamic alterations throughout a female's reproductive life, making it an ideal model for developmental, stem cell and cancer biology research. Mammary gland development begins in utero and proceeds via a quiescent bud stage before the initial outgrowth and subsequent branching morphogenesis. How mammary epithelial cells transit from quiescence to an actively proliferating and branching tissue during embryogenesis and, importantly, how the branch pattern is determined remain largely unknown.", style = "font-size: 16px; margin-bottom: 15px; text-align: justify;"),
         p("This interactive application summarized embryonic mammary gland RNA sequencing data from two key studies conducted in the ", 
           tags$a("Marja Mikkola Group", href = "https://www.helsinki.fi/en/researchgroups/epithelial-morphogenesis", target = "_blank", style = "font-weight: bold;"), 
           "at Institute of Biotechnology, HiLIFE, University of Helsinki, on the epithelium and mesenchyme compartments, respectively.", style = "font-size: 16px;"),
@@ -34,6 +41,18 @@ tab_summaryUI <- function(id) {
         tags$ul(
           tags$li(strong("Epithelium:"), "Analysis of gene expression in the mammary epithelium (Satta et al.).", style = "font-size: 15px;"),
           tags$li(strong("Mesenchyme:"), "Analysis of gene expression in the mammary mesenchyme (Lan et al.).", style = "font-size: 15px;")
+        ),
+        br(),
+        div(style = "background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin-top: 20px;",
+          h5("Contact Information", style = "color: #007bff; margin-bottom: 10px;"),
+          p(style = "font-size: 14px; margin-bottom: 5px;",
+            strong("Project-related issues:"), " Contact ", 
+            tags$a("Marja Mikkola", href = "mailto:marja.mikkola@helsinki.fi", style = "color: #007bff;")
+          ),
+          p(style = "font-size: 14px; margin-bottom: 0px;",
+            strong("Technical/website issues:"), " Contact ", 
+            tags$a("Qiang Lan", href = "mailto:qiang.lan@bristol.ac.uk", style = "color: #007bff;")
+          )
         )
       )
     ),
@@ -87,7 +106,8 @@ tab_summaryUI <- function(id) {
           )
         )
       )
-    )
+    ),
+    
   )
 }
 
