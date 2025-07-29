@@ -617,9 +617,9 @@ tab_epitheliumServer <- function(id, parent_session) {
             if (show_loading() && is.null(cached_normalized_data())) {
               
               tryCatch({
-                dds <- readRDS("rawData/Satta et al/Deseq_dds_normalized_matrix.rds")
-                gene_annotation <- readRDS("rawData/Satta et al/gene_annotation.rds")
-                sample_table <- read.csv("rawData/Satta et al/sampleTable.csv", stringsAsFactors = TRUE)
+                dds <- readRDS("rawData/Satta_et_al/Deseq_dds_normalized_matrix.rds")
+                gene_annotation <- readRDS("rawData/Satta_et_al/gene_annotation.rds")
+                sample_table <- read.csv("rawData/Satta_et_al/sampleTable.csv", stringsAsFactors = TRUE)
             
                 # Convert to long format
                 normalized_count <- dds %>% 
@@ -632,9 +632,9 @@ tab_epitheliumServer <- function(id, parent_session) {
                   merge(gene_annotation[, 1:2], by = "ensembl_gene_id")
                 
                 # Load DESeq2 data
-                e16_vs_e13 <- read.csv("rawData/Satta et al/24_group_E16.5_WT_vs_E13.5_WT_LFC_shrinkaged.csv")
-                e13_stab_vs_wt <- read.csv("rawData/Satta et al/20_group_E13.5_Stab_bcat_vs_E13.5_WT_LFC_shrinkaged.csv")
-                e16_stab_vs_wt <- read.csv("rawData/Satta et al/28_group_E16.5_Stab_bcat_vs_E16.5_WT_LFC_shrinkaged.csv")
+                e16_vs_e13 <- read.csv("rawData/Satta_et_al/24_group_E16.5_WT_vs_E13.5_WT_LFC_shrinkaged.csv")
+                e13_stab_vs_wt <- read.csv("rawData/Satta_et_al/20_group_E13.5_Stab_bcat_vs_E13.5_WT_LFC_shrinkaged.csv")
+                e16_stab_vs_wt <- read.csv("rawData/Satta_et_al/28_group_E16.5_Stab_bcat_vs_E16.5_WT_LFC_shrinkaged.csv")
                 
                 # Combine results
                 e16_vs_e13$comparison <- "E16.5_WT_vs_E13.5_WT"

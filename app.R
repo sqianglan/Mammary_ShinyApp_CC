@@ -51,7 +51,7 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   # Initialize all modules
   tab_summaryServer("summary")
-  tab_mesenchymeServer("mesenchyme")
+  tab_mesenchymeServer("mesenchyme", parent_session = session)
   tab_atacseqServer("atacseq")
   tab_epitheliumServer("epithelium", parent_session = session)
 }

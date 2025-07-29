@@ -6,7 +6,7 @@ tab_summaryUI <- function(id) {
       box(
         title = "Project Overview", status = "primary", solidHeader = TRUE, width = 12,
         h3("Embryonic Mammary RNA-seq Analysis"),
-        p("This interactive application analyzes embryonic mammary gland RNA sequencing data from the Satta et al. study."),
+        p("This interactive application analyzes embryonic mammary gland RNA sequencing data from the Satta_et_al. study."),
         br(),
         h4("Dataset Information:"),
         tags$ul(
@@ -44,7 +44,7 @@ tab_summaryServer <- function(id) {
     
     sample_data <- reactive({
       tryCatch({
-        read.csv("rawData/Satta et al/sampleTable.csv", stringsAsFactors = TRUE)
+        read.csv("rawData/Satta_et_al/sampleTable.csv", stringsAsFactors = TRUE)
       }, error = function(e) {
         data.frame(
           sampleName = c("Sample_1", "Sample_2", "Sample_3"),
