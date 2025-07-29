@@ -15,7 +15,6 @@ source("Modules/tab_summary.R", encoding = "UTF-8")
 source("Modules/tab_mesenchyme.R", encoding = "UTF-8")
 source("Modules/tab_mfuzzy_cluster.R", encoding = "UTF-8")
 source("Modules/tab_tissue_markers.R", encoding = "UTF-8")
-source("Modules/tab_atacseq.R", encoding = "UTF-8")
 source("Modules/tab_epithelium.R", encoding = "UTF-8")
 
 ui <- dashboardPage(
@@ -25,8 +24,8 @@ ui <- dashboardPage(
     sidebarMenu(id = "tabs",
       menuItem("Summary", tabName = "summary", icon = icon("chart-line")),
       menuItem("Epithelium", tabName = "epithelium", icon = icon("dna")),
-      menuItem("Mesenchyme", tabName = "mesenchyme", icon = icon("microscope")),
-      menuItem("ATAC-seq", tabName = "atacseq", icon = icon("search"))
+      menuItem("Mesenchyme", tabName = "mesenchyme", icon = icon("microscope"))
+      #menuItem("ATAC-seq", tabName = "atacseq", icon = icon("search"))
     )
   ),
   
@@ -42,11 +41,11 @@ ui <- dashboardPage(
       
       tabItem(tabName = "mesenchyme",
         tab_mesenchymeUI("mesenchyme")
-      ),
-      
-      tabItem(tabName = "atacseq",
-        tab_atacseqUI("atacseq")
       )
+      
+      #tabItem(tabName = "atacseq",
+      #  tab_atacseqUI("atacseq")
+      #)
     )
   )
 )
@@ -55,7 +54,7 @@ server <- function(input, output, session) {
   # Initialize all modules
   tab_summaryServer("summary")
   tab_mesenchymeServer("mesenchyme", parent_session = session)
-  tab_atacseqServer("atacseq")
+  #tab_atacseqServer("atacseq")
   tab_epitheliumServer("epithelium", parent_session = session)
 }
 
