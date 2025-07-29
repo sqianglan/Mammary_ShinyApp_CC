@@ -1,39 +1,91 @@
+library(shiny)
+library(DT)
+
 tab_summaryUI <- function(id) {
   ns <- NS(id)
   
   fluidPage(
+    # Top section with logo
     fluidRow(
-      box(
-        title = "Project Overview", status = "primary", solidHeader = TRUE, width = 12,
-        h3("Embryonic Mammary RNA-seq Analysis"),
-        p("This interactive application analyzes embryonic mammary gland RNA sequencing data from the Satta_et_al. study."),
-        br(),
-        h4("Dataset Information:"),
-        tags$ul(
-          tags$li("Species: Mouse"),
-          tags$li("Tissue: Embryonic mammary gland"),
-          tags$li("Time points: E13.5 and E16.5"),
-          tags$li("Conditions: Wild type (WT) and Stabilized β-catenin (Stab_bcat)")
-        ),
-        br(),
-        h4("Available Analysis Tabs:"),
-        tags$ul(
-          tags$li(strong("Epithelium:"), "Gene expression analysis with statistical comparisons"),
-          tags$li(strong("Mesenchyme:"), "Mesenchymal tissue analysis"),
-          tags$li(strong("ATAC-seq:"), "Chromatin accessibility data")
+      column(9,
+        h2("Embryonic Mammary Gland RNA-seq Analysis", style = "margin-top: 20px;")
+      ),
+      column(3,
+        div(style = "text-align: right; margin-top: 10px;",
+          img(src = "HY__LD01_LogoFP_EN_B3____BW.png", height = "120px", alt = "University of Helsinki Logo")
         )
       )
     ),
     
     fluidRow(
       box(
-        title = "Sample Information", status = "info", solidHeader = TRUE, width = 6,
-        DT::dataTableOutput(ns("sample_table"))
+        title = "Project Overview", status = "primary", solidHeader = TRUE, width = 12,
+        p("This interactive application summarized embryonic mammary gland RNA sequencing data from two key studies conducted in the ", 
+          tags$a("Marja Mikkola Group", href = "https://www.helsinki.fi/en/researchgroups/epithelial-morphogenesis", target = "_blank", style = "font-weight: bold;"), 
+          "at Institute of Biotechnology, HiLIFE, University of Helsinki, on the epithelium and mesenchyme compartments, respectively.", style = "font-size: 16px;"),
+        br(),
+        h4("Datasets and Citations:", style = "font-size: 18px;"),
+        tags$ul(
+          tags$li(strong("Epithelium Data:"), tags$em("\"Stabilization of Epithelial β-Catenin Compromises Mammary Cell Fate Acquisition and Branching Morphogenesis\""), " Satta JP, Lan Q, Taketo MM, Mikkola ML. ", tags$a("J Invest Dermatol. 2024;144(6):1223-1237.e10", href = "https://doi.org/10.1016/j.jid.2023.11.018", target = "_blank"), " | GEO: ", tags$a("GSE236630", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE236630", target = "_blank"), style = "font-size: 15px;"),
+          tags$li(strong("Mesenchyme Data:"), tags$em("\"Mesenchyme instructs growth while epithelium directs branching in the mouse mammary gland\""), " Lan Q, Trela E, Lindström R, Satta JP, Kaczyńska B, Christensen MM, Holzenberger M, Jernvall J, Mikkola ML. ", tags$a("eLife. 2024;13:e93326", href = "https://doi.org/10.7554/eLife.93326", target = "_blank"), " | GEO: ", tags$a("GSE225821", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE225821", target = "_blank"), style = "font-size: 15px;")
+        ),
+        br(),
+        h4("Available Analysis Tabs:", style = "font-size: 18px;"),
+        tags$ul(
+          tags$li(strong("Epithelium:"), "Analysis of gene expression in the mammary epithelium (Satta et al.).", style = "font-size: 15px;"),
+          tags$li(strong("Mesenchyme:"), "Analysis of gene expression in the mammary mesenchyme (Lan et al.).", style = "font-size: 15px;")
+        )
+      )
+    ),
+    
+    fluidRow(
+      box(
+        title = "Epithelium Dataset Summary (Satta et al.)", status = "info", solidHeader = TRUE, width = 6,
+        tableOutput(ns("epithelium_summary"))
       ),
       
       box(
-        title = "Dataset Statistics", status = "info", solidHeader = TRUE, width = 6,
-        tableOutput(ns("dataset_stats"))
+        title = "Mesenchyme Dataset Summary (Lan et al.)", status = "info", solidHeader = TRUE, width = 6,
+        tableOutput(ns("mesenchyme_summary"))
+      )
+    ),
+    
+    # Funding section
+    fluidRow(
+      box(
+        title = "FUNDING", status = "success", solidHeader = TRUE, width = 12,
+        div(style = "text-align: center;",
+          fluidRow(
+            column(12,
+                div(style = "display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px;",
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "sigrid_juselius_logo_400x400.jpg.png", height = "100px", alt = "Sigrid Jusélius Foundation")
+                ),
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "cancer_society_of_finland_2.logo.png", height = "100px", alt = "Cancer Society of Finland")
+                ),
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "OÖ-logo-1944-4.png", height = "100px", alt = "Oskar Öflunds Stiftelse")
+                ),
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "suomen-kulttuurirahasto-logo-nelio-harmaa.png", height = "100px", alt = "Finnish Cultural Foundation")
+                ),
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "ejag.logo.png", height = "100px", alt = "Ella ja Georg Ehrnroothin Säätiö")
+                ),
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "ils-logo.jpg.png", height = "100px", alt = "ILS")
+                ),
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "AKA_FI_SE_ENG_sininen_RGB_logo.png", height = "100px", alt = "Academy of Finland")
+                ),
+                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "hilife-logo-square-black-text.png", height = "100px", alt = "HiLIFE")
+                )
+                )
+            )
+          )
+        )
       )
     )
   )
@@ -42,38 +94,65 @@ tab_summaryUI <- function(id) {
 tab_summaryServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     
-    sample_data <- reactive({
+    # Load Epithelium Sample Data
+    sample_data_epithelium <- reactive({
       tryCatch({
         read.csv("rawData/Satta_et_al/sampleTable.csv", stringsAsFactors = TRUE)
       }, error = function(e) {
-        data.frame(
-          sampleName = c("Sample_1", "Sample_2", "Sample_3"),
-          group = c("E13.5_WT", "E16.5_WT", "E13.5_Stab_bcat"),
-          condition = c("WT", "WT", "Stab_bcat")
-        )
+        data.frame(Error = "Failed to load Satta et al. sample data.")
       })
     })
     
-    output$sample_table <- DT::renderDataTable({
-      DT::datatable(
-        sample_data(),
-        options = list(pageLength = 10, scrollX = TRUE),
-        rownames = FALSE
-      )
+    # Load Mesenchyme Sample Data
+    sample_data_mesenchyme <- reactive({
+      tryCatch({
+        read.csv("rawData/Lan_et_al/All_data/sampleTable.csv", stringsAsFactors = TRUE)
+      }, error = function(e) {
+        data.frame(Error = "Failed to load Lan et al. sample data.")
+      })
     })
     
-    output$dataset_stats <- renderTable({
-      data <- sample_data()
-      stats <- data.frame(
-        Metric = c("Total Samples", "Unique Groups", "Time Points", "Conditions"),
-        Value = c(
-          nrow(data),
-          length(unique(data$group)),
-          "E13.5, E16.5",
-          "WT, Stab_bcat"
+    output$epithelium_summary <- renderTable({
+      data <- sample_data_epithelium()
+      
+      if ("Error" %in% names(data)) {
+        data.frame(
+          Metric = "Error",
+          Value = "Failed to load data"
         )
-      )
-      stats
+      } else {
+        data.frame(
+          Metric = c("Total Samples", "Unique Groups", "Time Points", "Conditions"),
+          Value = c(
+            nrow(data),
+            length(unique(data$group)),
+            "E13.5, E16.5",
+            "WT, Stab β-catenin"
+          )
+        )
+      }
+    }, striped = TRUE, hover = TRUE)
+    
+    output$mesenchyme_summary <- renderTable({
+      data <- sample_data_mesenchyme()
+      
+      if ("Error" %in% names(data)) {
+        data.frame(
+          Metric = "Error",
+          Value = "Failed to load data"
+        )
+      } else {
+        unique_groups <- unique(data$groups)
+        data.frame(
+          Metric = c("Total Samples", "Unique Groups", "Time Points", "Tissue Types"),
+          Value = c(
+            nrow(data),
+            length(unique_groups),
+            "E13.5, E16.5",
+            "Mammary Mesenchyme, Skin Mesenchyme, SMG Mesenchyme, Fatpad"
+          )
+        )
+      }
     }, striped = TRUE, hover = TRUE)
     
   })

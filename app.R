@@ -22,7 +22,7 @@ ui <- dashboardPage(
   
   dashboardSidebar(
     sidebarMenu(id = "tabs",
-      menuItem("Summary", tabName = "summary", icon = icon("chart-line")),
+      menuItem("Home", tabName = "summary", icon = icon("home")),
       menuItem("Epithelium", tabName = "epithelium", icon = icon("dna")),
       menuItem("Mesenchyme", tabName = "mesenchyme", icon = icon("microscope"))
       #menuItem("ATAC-seq", tabName = "atacseq", icon = icon("search"))
