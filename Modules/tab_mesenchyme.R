@@ -115,6 +115,16 @@ tab_mesenchymeUI <- function(id) {
           tabPanel("E16.5 Fatpad vs SMG Mes", DT::dataTableOutput(ns("deseq_table5"))),
           tabPanel("E13.5 Skin Mes vs Mammary Mes", DT::dataTableOutput(ns("deseq_table6")))
         )
+      ),
+      
+      # mFuzzy Cluster Analysis Tab
+      fluidRow(
+        tab_mfuzzy_clusterUI(ns("mfuzzy_cluster"))
+      ),
+      
+      # Tissue Markers Analysis Tab
+      fluidRow(
+        tab_tissue_markersUI(ns("tissue_markers"))
       )
   )
 }
@@ -571,17 +581,17 @@ tab_mesenchymeServer <- function(id, parent_session) {
                  width = 0.7, aes(fill = groups), linewidth = 0.4, alpha = 0.6, show.legend = FALSE) +
         geom_quasirandom(show.legend = FALSE, size = 3, alpha = 0.8) +
         scale_fill_manual(
-          values = c('E13.5_SMG_Mes' = '#91D1C2FF', 'E13.5_Mammary_Mes' = '#4DBBD5FF', 
-                     'E13.5_Skin_Mes_Ventral' = '#8491B4FF', 'E16.5_Mammary_Mes' = '#F39B7FFF', 
-                     'E16.5_Fatpad' = '#E64B35FF'), 
-          labels = c("E13.5 SMG Mes", "E13.5 Mammary Mes", "E13.5 Skin Mes", "E16.5 Mammary Mes", "E16.5 Fatpad"), 
+          values = c('E13.5_Skin_Mes_Ventral' = '#A6CEE3', 'E13.5_Mammary_Mes' = '#1F78B4', 
+                     'E16.5_Mammary_Mes' = '#B2DF8A', 'E16.5_Fatpad' = '#33A02C', 
+                     'E13.5_SMG_Mes' = '#FB9A99'), 
+          labels = c("E13.5 Skin Mes", "E13.5 Mammary Mes", "E16.5 Mammary Mes", "E16.5 Fatpad", "E13.5 SMG Mes"), 
           name = "Group"
         ) +
         scale_color_manual(
-          values = c('E13.5_SMG_Mes' = '#008E51', 'E13.5_Mammary_Mes' = '#3C5488FF',
-                     'E13.5_Skin_Mes_Ventral' = '#5C5C5CFF', 'E16.5_Mammary_Mes' = '#E64B35FF', 
-                     'E16.5_Fatpad' = '#DC0000FF'),
-          labels = c("E13.5 SMG Mes", "E13.5 Mammary Mes", "E13.5 Skin Mes", "E16.5 Mammary Mes", "E16.5 Fatpad"), 
+          values = c('E13.5_Skin_Mes_Ventral' = '#4A90A4', 'E13.5_Mammary_Mes' = '#1F5582', 
+                     'E16.5_Mammary_Mes' = '#5B8A3A', 'E16.5_Fatpad' = '#2E7D32', 
+                     'E13.5_SMG_Mes' = '#C2717A'),
+          labels = c("E13.5 Skin Mes", "E13.5 Mammary Mes", "E16.5 Mammary Mes", "E16.5 Fatpad", "E13.5 SMG Mes"), 
           name = "Group"
         ) +
         xlab("") +
@@ -960,6 +970,10 @@ tab_mesenchymeServer <- function(id, parent_session) {
         caption = "E13.5 Skin Mes vs Mammary Mes Comparison"
       )
     })
+    
+    # Initialize new sub-modules
+    tab_mfuzzy_clusterServer("mfuzzy_cluster")
+    tab_tissue_markersServer("tissue_markers")
     
   })
 }

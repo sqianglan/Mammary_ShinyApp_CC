@@ -8,10 +8,13 @@ library(DESeq2)
 library(ggpubr)
 library(ggbeeswarm)
 library(patchwork)
+library(shinycssloaders)
 
 # Source UI and server modules
 source("Modules/tab_summary.R", encoding = "UTF-8")
 source("Modules/tab_mesenchyme.R", encoding = "UTF-8")
+source("Modules/tab_mfuzzy_cluster.R", encoding = "UTF-8")
+source("Modules/tab_tissue_markers.R", encoding = "UTF-8")
 source("Modules/tab_atacseq.R", encoding = "UTF-8")
 source("Modules/tab_epithelium.R", encoding = "UTF-8")
 
