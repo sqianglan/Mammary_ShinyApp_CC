@@ -3,6 +3,7 @@ library(shinydashboard)
 library(httr)
 library(jsonlite)
 library(DT)
+library(googlesheets4)
 
 # Function to get client IP address
 get_client_ip <- function(session) {
@@ -63,10 +64,111 @@ get_geolocation <- function(ip) {
   ))
 }
 
-# Function to log visitor data
-log_visitor <- function(session, log_file = "visitor_logs.csv") {
-  # Force the log file to be in the working directory
-  log_file <- file.path(getwd(), log_file)
+# Google Sheets Configuration
+SHEETS_ID <- Sys.getenv("GOOGLE_SHEETS_ID", "")  # Set via environment variable
+SHEET_NAME <- "visitor_logs"
+
+# Initialize Google Sheets authentication
+init_sheets_auth <- function() {
+  tryCatch({
+    # Check if running in non-interactive mode (server)
+    if (!interactive()) {
+      # Use service account authentication for servers
+      service_key <- Sys.getenv("GOOGLE_SERVICE_KEY")
+      if (service_key != "") {
+        # If service key is provided as environment variable (JSON string)
+        temp_key_file <- tempfile(fileext = ".json")
+        writeLines(service_key, temp_key_file)
+        gs4_auth(path = temp_key_file)
+        unlink(temp_key_file)
+        message("Sheets: Using service account authentication")
+      } else {
+        # Try service account file path
+        key_file <- Sys.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if (key_file != "" && file.exists(key_file)) {
+          gs4_auth(path = key_file)
+          message("Sheets: Using service account key file")
+        } else {
+          message("Sheets: No authentication found, falling back to local storage")
+          return(FALSE)
+        }
+      }
+    } else {
+      # Interactive mode - use browser authentication
+      gs4_auth()
+      message("Sheets: Using interactive authentication")
+    }
+    return(TRUE)
+  }, error = function(e) {
+    message("Sheets authentication failed: ", e$message)
+    return(FALSE)
+  })
+}
+
+# Read visitor data from Google Sheets
+read_visitor_data_sheets <- function() {
+  tryCatch({
+    if (SHEETS_ID == "") {
+      message("Google Sheets ID not configured")
+      return(data.frame())
+    }
+    
+    # Check if sheet exists
+    sheet_info <- gs4_get(SHEETS_ID)
+    if (!SHEET_NAME %in% sheet_info$sheets$name) {
+      message("Sheets: Creating new sheet tab")
+      # Create the sheet with headers
+      headers <- data.frame(
+        timestamp = character(0),
+        ip_address = character(0),
+        country = character(0),
+        region = character(0),
+        city = character(0),
+        timezone = character(0),
+        user_agent = character(0),
+        session_id = character(0),
+        stringsAsFactors = FALSE
+      )
+      sheet_write(headers, ss = SHEETS_ID, sheet = SHEET_NAME)
+      return(data.frame())
+    }
+    
+    # Read existing data
+    data <- read_sheet(SHEETS_ID, sheet = SHEET_NAME)
+    if (nrow(data) > 0) {
+      # Convert to data.frame and ensure correct column types
+      data <- as.data.frame(data)
+      message("Sheets: Successfully loaded ", nrow(data), " visitor records")
+    }
+    return(data)
+  }, error = function(e) {
+    message("Failed to read from Google Sheets: ", e$message)
+    return(data.frame())
+  })
+}
+
+# Write visitor data to Google Sheets
+write_visitor_data_sheets <- function(data) {
+  tryCatch({
+    if (SHEETS_ID == "") {
+      message("Google Sheets ID not configured")
+      return(FALSE)
+    }
+    
+    # Clear existing data and write new data
+    range_clear(SHEETS_ID, sheet = SHEET_NAME)
+    sheet_write(data, ss = SHEETS_ID, sheet = SHEET_NAME)
+    
+    message("Sheets: Successfully uploaded ", nrow(data), " visitor records")
+    return(TRUE)
+  }, error = function(e) {
+    message("Failed to write to Google Sheets: ", e$message)
+    return(FALSE)
+  })
+}
+
+# Function to log visitor data (updated for Google Sheets)
+log_visitor <- function(session, use_sheets = TRUE) {
   ip <- get_client_ip(session)
   geo <- get_geolocation(ip)
   
@@ -83,25 +185,41 @@ log_visitor <- function(session, log_file = "visitor_logs.csv") {
     stringsAsFactors = FALSE
   )
   
-  # Create or append to log file
-  if (file.exists(log_file)) {
-    existing_data <- read.csv(log_file, stringsAsFactors = FALSE)
-    combined_data <- rbind(existing_data, visitor_data)
-  } else {
-    combined_data <- visitor_data
+  if (use_sheets && SHEETS_ID != "" && init_sheets_auth()) {
+    # Use Google Sheets storage
+    existing_data <- read_visitor_data_sheets()
+    if (nrow(existing_data) > 0) {
+      combined_data <- rbind(existing_data, visitor_data)
+    } else {
+      combined_data <- visitor_data
+    }
+    
+    if (write_visitor_data_sheets(combined_data)) {
+      message("Visitor logged to Google Sheets: ", ip, " from ", geo$city, ", ", geo$country)
+    } else {
+      message("Failed to log to Google Sheets, falling back to local storage")
+      use_sheets <- FALSE
+    }
   }
   
-  # Write to CSV
-  tryCatch({
-    write.csv(combined_data, log_file, row.names = FALSE)
-    message("Visitor logged: ", ip, " from ", geo$city, ", ", geo$country, " at ", visitor_data$timestamp)
-    message("Log file path: ", log_file)
-    message("Total visitors logged: ", nrow(combined_data))
-  }, error = function(e) {
-    message("Failed to write visitor log: ", e$message)
-    message("Attempted to write to: ", log_file)
-    message("Working directory: ", getwd())
-  })
+  if (!use_sheets) {
+    # Fallback to local storage
+    log_file <- file.path(getwd(), "visitor_logs.csv")
+    
+    if (file.exists(log_file)) {
+      existing_data <- read.csv(log_file, stringsAsFactors = FALSE)
+      combined_data <- rbind(existing_data, visitor_data)
+    } else {
+      combined_data <- visitor_data
+    }
+    
+    tryCatch({
+      write.csv(combined_data, log_file, row.names = FALSE)
+      message("Visitor logged locally: ", ip, " from ", geo$city, ", ", geo$country)
+    }, error = function(e) {
+      message("Failed to write local visitor log: ", e$message)
+    })
+  }
   
   return(visitor_data)
 }
@@ -204,7 +322,7 @@ analytics_ui <- function(id) {
 }
 
 # Analytics Server module
-analytics_server <- function(id, log_file = "visitor_logs.csv") {
+analytics_server <- function(id, use_sheets = TRUE) {
   moduleServer(id, function(input, output, session) {
     
     # Helper function to filter data by time range
@@ -227,11 +345,20 @@ analytics_server <- function(id, log_file = "visitor_logs.csv") {
     visitor_data <- reactive({
       invalidateLater(30000)  # Refresh every 30 seconds
       
-      # Use same file path as log_visitor function
-      full_log_file <- file.path(getwd(), log_file)
+      if (use_sheets && SHEETS_ID != "" && init_sheets_auth()) {
+        # Load from Google Sheets
+        data <- read_visitor_data_sheets()
+      } else {
+        # Fallback to local file
+        local_file <- file.path(getwd(), "visitor_logs.csv")
+        if (file.exists(local_file)) {
+          data <- read.csv(local_file, stringsAsFactors = FALSE)
+        } else {
+          data <- data.frame()
+        }
+      }
       
-      if (file.exists(full_log_file)) {
-        data <- read.csv(full_log_file, stringsAsFactors = FALSE)
+      if (nrow(data) > 0) {
         # Handle timestamp parsing with error handling
         data$timestamp <- sapply(data$timestamp, function(ts) {
           # First, try to detect if it's a Unix timestamp (numeric)
@@ -257,10 +384,9 @@ analytics_server <- function(id, log_file = "visitor_logs.csv") {
         })
         # Convert back to POSIXct class
         data$timestamp <- as.POSIXct(data$timestamp, origin = "1970-01-01")
-        return(data)
-      } else {
-        return(data.frame())
       }
+      
+      return(data)
     })
     
     # Filtered data for visitor table
