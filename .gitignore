@@ -58,9 +58,11 @@ Thumbs.db
 # Images (uncomment if you want to exclude images)
 # *.png
 # *.jpg
-# *.jpeg
+ *.jpeg
+ **/*.jpeg
 # *.gif
-# *.pdf
+*.pdf
+**/*.pdf
 
 # Additional R files
 .Rprofile

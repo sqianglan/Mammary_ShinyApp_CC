@@ -94,7 +94,7 @@ tab_epitheliumUI <- function(id) {
                   " Satta JP, Lan Q, Taketo MM, Mikkola ML. ",
                   a("J Invest Dermatol. 2024;144(6):1223-1237.e10", href = "https://doi.org/10.1016/j.jid.2023.11.018", target = "_blank"),
                   style = "font-size: 12px; margin-bottom: 2px; font-style: italic; text-align: left;"),
-                p("The data is also available at GEO with accession number: ", a("GSE236630", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE236630", target = "_blank"), style = "font-size: 12px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
+                p("The data is also available at GEO with accession number ", a("GSE236630", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE236630", target = "_blank"), style = "font-size: 12px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
                 )
               )
           )

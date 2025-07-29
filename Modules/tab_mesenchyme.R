@@ -92,14 +92,14 @@ tab_mesenchymeUI <- function(id) {
                 ),
                 div(style = "margin-top: auto; padding-top: 2px;",
                 p("The study associated with this data has been published. Please refer to the following citation for more details:", 
-                  style = "font-size: 12px; margin-bottom: 0px; text-align: justify;"),
+                  style = "font-size: 14px; margin-bottom: 0px; text-align: justify;"),
                 br(),
                 p(em("\"Mesenchyme instructs growth while epithelium directs branching in the mouse mammary gland\""), 
                   " Lan Q, Trela E, Lindström R, Satta JP, Kaczyńska B, Christensen MM, Holzenberger M, Jernvall J, Mikkola ML. ",
                   a("eLife. 2024;13:e93326", href = "https://doi.org/10.7554/eLife.93326", target = "_blank"),
-                  style = "font-size: 12px; margin-bottom: 2px; font-style: italic; text-align: left;"),
+                  style = "font-size: 14px; margin-bottom: 2px; font-style: italic; text-align: left;"),
                 br(),
-                p("The data is also available at GEO with accession number: ", a("GSE225821", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE225821", target = "_blank"), style = "font-size: 12px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
+                p("The data is also available at GEO with accession number ", a("GSE225821", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE225821", target = "_blank"), style = "font-size: 14px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
                 )
               )
           )
