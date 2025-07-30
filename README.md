@@ -1,14 +1,14 @@
 # Embryonic Mammary RNA-seq Shiny Application
 
-Interactive web application for analyzing RNA-seq and ATAC-seq data from embryonic mammary tissue development.
+Interactive web application for analyzing RNA-seq data from embryonic mammary tissue development.
 
 ## Overview
 
-This Shiny application provides comprehensive visualization and analysis tools for exploring gene expression patterns and chromatin accessibility in embryonic mammary tissue development. The application features four main analysis modules organized in separate tabs.
+This Shiny application provides comprehensive visualization and analysis tools for exploring gene expression patterns in embryonic mammary tissue development. The application features three main analysis modules organized in separate tabs.
 
 ## Features
 
-### 📊 Summary Tab
+### 📊 Home Tab
 - Dataset overview and description
 - Sample information and summary statistics
 - General visualization of the dataset
@@ -28,15 +28,6 @@ This Shiny application provides comprehensive visualization and analysis tools f
   - Statistical summaries
 - Threshold-based filtering
 
-### 🧪 ATAC-seq (Epithelium) Tab
-- Chromatin accessibility analysis for epithelial cells
-- Peak browser with genomic region selection
-- Peak calling parameter adjustment
-- Multiple analysis views:
-  - Peak browser
-  - Accessibility heatmaps
-  - Motif enrichment analysis
-  - Peak-gene association analysis
 
 ## Application Structure
 
@@ -44,10 +35,9 @@ This Shiny application provides comprehensive visualization and analysis tools f
 ├── app.R                    # Main application file
 ├── test_app.R              # Testing script
 └── Modules/                # Tab modules
-    ├── tab_summary.R       # Summary tab UI and server
+    ├── tab_summary.R       # Home tab UI and server
     ├── tab_epithelium.R    # Epithelium tab UI and server
-    ├── tab_mesenchyme.R    # Mesenchyme tab UI and server
-    └── tab_atacseq.R       # ATAC-seq tab UI and server
+    └── tab_mesenchyme.R    # Mesenchyme tab UI and server
 ```
 
 ## Requirements
@@ -117,7 +107,6 @@ Currently, the application uses placeholder data for demonstration purposes. To 
 | `Modules/tab_summary.R` | Summary tab with dataset overview and general statistics |
 | `Modules/tab_epithelium.R` | Epithelial gene expression analysis interface |
 | `Modules/tab_mesenchyme.R` | Mesenchymal gene expression analysis with advanced filtering |
-| `Modules/tab_atacseq.R` | ATAC-seq peak analysis and chromatin accessibility visualization |
 | `test_app.R` | Testing script to verify all components load correctly |
 
 ## Development
@@ -147,17 +136,13 @@ This project is open source. Please add an appropriate license file if you plan 
 
 ## Citation
 
-If you use this application in your research, please cite:
-
-```
-[Your Name]. (2025). Embryonic Mammary RNA-seq Shiny Application. 
-GitHub repository: https://github.com/YOUR_USERNAME/Embryonic_Mammary_RNAseq_ShinyApp
+GitHub repository: https://github.com/sqianglan/Mammary_ShinyApp_CC.git
 ```
 
 ## Contact
 
-For questions, issues, or contributions, please contact [Your Email] or open an issue on GitHub.
+For questions, issues, or contributions, please contact Qiang Lan (qiang.lan@bristol.ac.uk) or open an issue on GitHub.
 
 ---
 
-**Note**: This application currently uses simulated data for demonstration. Replace with your actual RNA-seq and ATAC-seq datasets for production use.
+**Note**: This application currently uses simulated data for demonstration. Replace with your actual RNA-seq datasets for production use.
