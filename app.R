@@ -6,10 +6,10 @@ library(DT)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
-library(DESeq2)
+#library(DESeq2)
 library(ggpubr)
 library(ggbeeswarm)
-library(patchwork)
+#library(patchwork)
 library(shinycssloaders)
 
 # Source UI and server modules
