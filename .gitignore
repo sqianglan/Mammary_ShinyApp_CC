@@ -80,3 +80,4 @@ test_only/
 # Shiny specific
 shiny_bookmarks/
 .Rproj.user
+GOOGLE_SHEETS_SETUP.md

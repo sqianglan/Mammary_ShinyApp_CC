@@ -77,28 +77,28 @@ tab_summaryUI <- function(id) {
           fluidRow(
             column(12,
                 div(style = "display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px;",
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
-                  img(src = "sigrid_juselius_logo_400x400.jpg.png", height = "100px", alt = "Sigrid Jusélius Foundation")
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
+                  img(src = "sigrid_juselius_logo.png", height = "100px", alt = "Sigrid Jusélius Foundation")
                 ),
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
                   img(src = "cancer_society_of_finland_2.logo.png", height = "100px", alt = "Cancer Society of Finland")
                 ),
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
                   img(src = "OÖ-logo-1944-4.png", height = "100px", alt = "Oskar Öflunds Stiftelse")
                 ),
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
                   img(src = "suomen-kulttuurirahasto-logo-nelio-harmaa.png", height = "100px", alt = "Finnish Cultural Foundation")
                 ),
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
                   img(src = "ejag.logo.png", height = "100px", alt = "Ella ja Georg Ehrnroothin Säätiö")
                 ),
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
                   img(src = "ils-logo.jpg.png", height = "100px", alt = "ILS")
                 ),
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
                   img(src = "AKA_FI_SE_ENG_sininen_RGB_logo.png", height = "100px", alt = "Academy of Finland")
                 ),
-                div(style = "flex: 0 0 auto; margin: 10px; display: flex; align-items: center; justify-content: center;",
+                div(style = "flex: 1 1 auto; margin: 7px; display: flex; align-items: center; justify-content: center;",
                   img(src = "hilife-logo-square-black-text.png", height = "100px", alt = "HiLIFE")
                 )
                 )
