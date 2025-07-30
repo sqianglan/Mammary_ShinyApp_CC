@@ -4352,6 +4352,9 @@
     "CLAUDE.md": {
       "checksum": "06e1454fa99f0cfb9eaf8fc56583b907"
     },
+    "GITHUB_ANALYTICS_SETUP.md": {
+      "checksum": "8e6bf935903859d1ebbf057c9fbf1852"
+    },
     "GOOGLE_SHEETS_SETUP.md": {
       "checksum": "ac47232415e2841bf1be2c706a3b1fc6"
     },
@@ -4359,7 +4362,7 @@
       "checksum": "36e9dc9987a2e27985e76365050df273"
     },
     "Modules/analytics_tracker.R": {
-      "checksum": "7b9d88d4f88a6cb775533b5307cfe5c9"
+      "checksum": "5e98b3a75346e3add5edf061d6342867"
     },
     "Modules/tab_atacseq.R": {
       "checksum": "160fd32f34b0335831169d10bfa4c556"
