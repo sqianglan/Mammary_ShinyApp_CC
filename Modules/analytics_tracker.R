@@ -3,7 +3,7 @@ library(shinydashboard)
 library(httr)
 library(jsonlite)
 library(DT)
-library(googlesheets4)
+library(base64enc)
 
 # Function to get client IP address
 get_client_ip <- function(session) {
@@ -64,111 +64,128 @@ get_geolocation <- function(ip) {
   ))
 }
 
-# Google Sheets Configuration
-SHEETS_ID <- Sys.getenv("GOOGLE_SHEETS_ID", "")  # Set via environment variable
-SHEET_NAME <- "visitor_logs"
+# GitHub Configuration
+GITHUB_TOKEN <- Sys.getenv("GITHUB_TOKEN", "")
+GITHUB_REPO <- Sys.getenv("GITHUB_REPO", "")  # Format: "username/repo-name"
+GITHUB_FILE_PATH <- "visitor_logs.csv"
 
-# Initialize Google Sheets authentication
-init_sheets_auth <- function() {
+# Initialize GitHub authentication
+init_github_auth <- function() {
+  if (GITHUB_TOKEN == "" || GITHUB_REPO == "") {
+    message("GitHub: Token or repo not configured, falling back to local storage")
+    return(FALSE)
+  }
+  
+  # Test authentication with a simple API call
   tryCatch({
-    # Check if running in non-interactive mode (server)
-    if (!interactive()) {
-      # Use service account authentication for servers
-      service_key <- Sys.getenv("GOOGLE_SERVICE_KEY")
-      if (service_key != "") {
-        # If service key is provided as environment variable (JSON string)
-        temp_key_file <- tempfile(fileext = ".json")
-        writeLines(service_key, temp_key_file)
-        gs4_auth(path = temp_key_file)
-        unlink(temp_key_file)
-        message("Sheets: Using service account authentication")
-      } else {
-        # Try service account file path
-        key_file <- Sys.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-        if (key_file != "" && file.exists(key_file)) {
-          gs4_auth(path = key_file)
-          message("Sheets: Using service account key file")
-        } else {
-          message("Sheets: No authentication found, falling back to local storage")
-          return(FALSE)
-        }
-      }
+    url <- paste0("https://api.github.com/repos/", GITHUB_REPO)
+    response <- GET(url, add_headers(
+      "Authorization" = paste("token", GITHUB_TOKEN),
+      "Accept" = "application/vnd.github.v3+json"
+    ))
+    
+    if (status_code(response) == 200) {
+      message("GitHub: Authentication successful")
+      return(TRUE)
     } else {
-      # Interactive mode - use browser authentication
-      gs4_auth()
-      message("Sheets: Using interactive authentication")
+      message("GitHub: Authentication failed - ", status_code(response))
+      return(FALSE)
     }
-    return(TRUE)
   }, error = function(e) {
-    message("Sheets authentication failed: ", e$message)
+    message("GitHub: Authentication error - ", e$message)
     return(FALSE)
   })
 }
 
-# Read visitor data from Google Sheets
-read_visitor_data_sheets <- function() {
+# Read visitor data from GitHub
+read_visitor_data_github <- function() {
   tryCatch({
-    if (SHEETS_ID == "") {
-      message("Google Sheets ID not configured")
+    url <- paste0("https://api.github.com/repos/", GITHUB_REPO, "/contents/", GITHUB_FILE_PATH)
+    response <- GET(url, add_headers(
+      "Authorization" = paste("token", GITHUB_TOKEN),
+      "Accept" = "application/vnd.github.v3+json"
+    ))
+    
+    if (status_code(response) == 404) {
+      message("GitHub: Visitor log file doesn't exist yet, starting fresh")
       return(data.frame())
     }
     
-    # Check if sheet exists
-    sheet_info <- gs4_get(SHEETS_ID)
-    if (!SHEET_NAME %in% sheet_info$sheets$name) {
-      message("Sheets: Creating new sheet tab")
-      # Create the sheet with headers
-      headers <- data.frame(
-        timestamp = character(0),
-        ip_address = character(0),
-        country = character(0),
-        region = character(0),
-        city = character(0),
-        timezone = character(0),
-        user_agent = character(0),
-        session_id = character(0),
-        stringsAsFactors = FALSE
-      )
-      sheet_write(headers, ss = SHEETS_ID, sheet = SHEET_NAME)
+    if (status_code(response) != 200) {
+      message("GitHub: Failed to read file - ", status_code(response))
       return(data.frame())
     }
     
-    # Read existing data
-    data <- read_sheet(SHEETS_ID, sheet = SHEET_NAME)
-    if (nrow(data) > 0) {
-      # Convert to data.frame and ensure correct column types
-      data <- as.data.frame(data)
-      message("Sheets: Successfully loaded ", nrow(data), " visitor records")
-    }
+    # Parse response and decode base64 content
+    content <- content(response, "parsed")
+    csv_content <- rawToChar(base64decode(content$content))
+    
+    # Read CSV from string
+    data <- read.csv(text = csv_content, stringsAsFactors = FALSE)
+    message("GitHub: Successfully loaded ", nrow(data), " visitor records")
     return(data)
+    
   }, error = function(e) {
-    message("Failed to read from Google Sheets: ", e$message)
+    message("Failed to read from GitHub: ", e$message)
     return(data.frame())
   })
 }
 
-# Write visitor data to Google Sheets
-write_visitor_data_sheets <- function(data) {
+# Write visitor data to GitHub
+write_visitor_data_github <- function(data) {
   tryCatch({
-    if (SHEETS_ID == "") {
-      message("Google Sheets ID not configured")
+    # Convert data to CSV string
+    csv_string <- capture.output(write.csv(data, "", row.names = FALSE))
+    csv_content <- paste(csv_string, collapse = "\n")
+    
+    # Encode as base64
+    encoded_content <- base64encode(charToRaw(csv_content))
+    
+    # Get current file SHA if it exists (required for updates)
+    url <- paste0("https://api.github.com/repos/", GITHUB_REPO, "/contents/", GITHUB_FILE_PATH)
+    get_response <- GET(url, add_headers(
+      "Authorization" = paste("token", GITHUB_TOKEN),
+      "Accept" = "application/vnd.github.v3+json"
+    ))
+    
+    # Prepare commit data
+    commit_data <- list(
+      message = paste("Update visitor logs -", nrow(data), "total visits"),
+      content = encoded_content
+    )
+    
+    # Add SHA if file exists (for updates)
+    if (status_code(get_response) == 200) {
+      existing_content <- content(get_response, "parsed")
+      commit_data$sha <- existing_content$sha
+    }
+    
+    # Commit the file
+    put_response <- PUT(url, 
+      body = toJSON(commit_data, auto_unbox = TRUE),
+      add_headers(
+        "Authorization" = paste("token", GITHUB_TOKEN),
+        "Accept" = "application/vnd.github.v3+json",
+        "Content-Type" = "application/json"
+      )
+    )
+    
+    if (status_code(put_response) %in% c(200, 201)) {
+      message("GitHub: Successfully uploaded ", nrow(data), " visitor records")
+      return(TRUE)
+    } else {
+      message("GitHub: Failed to upload - ", status_code(put_response))
       return(FALSE)
     }
     
-    # Clear existing data and write new data
-    range_clear(SHEETS_ID, sheet = SHEET_NAME)
-    sheet_write(data, ss = SHEETS_ID, sheet = SHEET_NAME)
-    
-    message("Sheets: Successfully uploaded ", nrow(data), " visitor records")
-    return(TRUE)
   }, error = function(e) {
-    message("Failed to write to Google Sheets: ", e$message)
+    message("Failed to write to GitHub: ", e$message)
     return(FALSE)
   })
 }
 
-# Function to log visitor data (updated for Google Sheets)
-log_visitor <- function(session, use_sheets = TRUE) {
+# Function to log visitor data (updated for GitHub)
+log_visitor <- function(session, use_github = TRUE) {
   ip <- get_client_ip(session)
   geo <- get_geolocation(ip)
   
@@ -185,24 +202,24 @@ log_visitor <- function(session, use_sheets = TRUE) {
     stringsAsFactors = FALSE
   )
   
-  if (use_sheets && SHEETS_ID != "" && init_sheets_auth()) {
-    # Use Google Sheets storage
-    existing_data <- read_visitor_data_sheets()
+  if (use_github && init_github_auth()) {
+    # Use GitHub storage
+    existing_data <- read_visitor_data_github()
     if (nrow(existing_data) > 0) {
       combined_data <- rbind(existing_data, visitor_data)
     } else {
       combined_data <- visitor_data
     }
     
-    if (write_visitor_data_sheets(combined_data)) {
-      message("Visitor logged to Google Sheets: ", ip, " from ", geo$city, ", ", geo$country)
+    if (write_visitor_data_github(combined_data)) {
+      message("Visitor logged to GitHub: ", ip, " from ", geo$city, ", ", geo$country)
     } else {
-      message("Failed to log to Google Sheets, falling back to local storage")
-      use_sheets <- FALSE
+      message("Failed to log to GitHub, falling back to local storage")
+      use_github <- FALSE
     }
   }
   
-  if (!use_sheets) {
+  if (!use_github) {
     # Fallback to local storage
     log_file <- file.path(getwd(), "visitor_logs.csv")
     
@@ -322,7 +339,7 @@ analytics_ui <- function(id) {
 }
 
 # Analytics Server module
-analytics_server <- function(id, use_sheets = TRUE) {
+analytics_server <- function(id, use_github = TRUE) {
   moduleServer(id, function(input, output, session) {
     
     # Helper function to filter data by time range
@@ -345,9 +362,9 @@ analytics_server <- function(id, use_sheets = TRUE) {
     visitor_data <- reactive({
       invalidateLater(30000)  # Refresh every 30 seconds
       
-      if (use_sheets && SHEETS_ID != "" && init_sheets_auth()) {
-        # Load from Google Sheets
-        data <- read_visitor_data_sheets()
+      if (use_github && init_github_auth()) {
+        # Load from GitHub
+        data <- read_visitor_data_github()
       } else {
         # Fallback to local file
         local_file <- file.path(getwd(), "visitor_logs.csv")
