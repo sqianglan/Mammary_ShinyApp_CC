@@ -7,6 +7,20 @@ tab_summaryUI <- function(id) {
   ns <- NS(id)
   
   fluidPage(
+    tags$script(HTML("
+      function openTab(tabName) {
+        // Update the Shiny input
+        Shiny.setInputValue('tabs', tabName, {priority: 'event'});
+        
+        // Also trigger shinydashboard tab switching directly
+        setTimeout(function() {
+          var tabLink = $('a[data-value=\"' + tabName + '\"]');
+          if (tabLink.length > 0) {
+            tabLink.click();
+          }
+        }, 100);
+      }
+    ")),
     
     # Top section with logo
     fluidRow(
@@ -24,7 +38,12 @@ tab_summaryUI <- function(id) {
       box(
         title = "Project Overview", status = "primary", solidHeader = TRUE, width = 12,
         div(style = "text-align: center; margin-bottom: 20px;",
-          img(src = "Embryonic mamamry gland development-v3_E10-E19.png", width = "80%", alt = "Embryonic Mammary Gland Development E10-E19")
+          img(src = "Embryonic mamamry gland development-v3_E10-E19.png", width = "80%", alt = "Embryonic Mammary Gland Development E10-E19"),
+          br(),
+          p(style = "font-size: 13px; color: #666; margin-top: 10px; font-style: italic;",
+            "Schematic diagram adapted from ",
+            tags$a("Dr. Ewelina Trela's doctoral dissertation", href = "http://hdl.handle.net/10138/333953", target = "_blank", style = "color: #007bff;"), "."
+          )
         ),
         p("The mammary gland is a unique organ that undergoes dynamic alterations throughout a female's reproductive life, making it an ideal model for developmental, stem cell and cancer biology research. Mammary gland development begins in utero and proceeds via a quiescent bud stage before the initial outgrowth and subsequent branching morphogenesis. How mammary epithelial cells transit from quiescence to an actively proliferating and branching tissue during embryogenesis and, importantly, how the branch pattern is determined remain largely unknown.", style = "font-size: 16px; margin-bottom: 15px; text-align: justify;"),
         p("This interactive application summarized embryonic mammary gland RNA sequencing data from two key studies conducted in the ", 
@@ -39,8 +58,8 @@ tab_summaryUI <- function(id) {
         br(),
         h4("Available Analysis Tabs:", style = "font-size: 18px;"),
         tags$ul(
-          tags$li(strong("Epithelium:"), "Analysis of gene expression in the mammary epithelium (Satta et al.).", style = "font-size: 15px;"),
-          tags$li(strong("Mesenchyme:"), "Analysis of gene expression in the mammary mesenchyme (Lan et al.).", style = "font-size: 15px;")
+          tags$li(tags$a("Epithelium", href = "#", onclick = "openTab('epithelium')", style = "font-weight: bold; color: #007bff; text-decoration: none;"), ": Analysis of gene expression in the mammary epithelium (Satta et al.).", style = "font-size: 15px;"),
+          tags$li(tags$a("Mesenchyme", href = "#", onclick = "openTab('mesenchyme')", style = "font-weight: bold; color: #007bff; text-decoration: none;"), ": Analysis of gene expression in the mammary mesenchyme (Lan et al.).", style = "font-size: 15px;")
         ),
         br(),
         div(style = "background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin-top: 20px;",
@@ -168,8 +187,8 @@ tab_summaryServer <- function(id) {
           Value = c(
             nrow(data),
             length(unique_groups),
-            "E13.5, E16.5",
-            "Mammary Mesenchyme, Skin Mesenchyme, SMG Mesenchyme, Fatpad"
+            "E13.5 or E16.5",
+            "Skin Mesenchyme,Mammary Mesenchyme, Fatpad, Submandibular gland (SMG) Mesenchyme"
           )
         )
       }

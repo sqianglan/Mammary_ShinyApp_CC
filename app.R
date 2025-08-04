@@ -26,14 +26,25 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(id = "tabs",
       menuItem("Home", tabName = "summary", icon = icon("home")),
-      menuItem("Epithelium", tabName = "epithelium", icon = icon("dna")),
-      menuItem("Mesenchyme", tabName = "mesenchyme", icon = icon("microscope"))
+      menuItem("Epithelium", tabName = "epithelium", icon = icon("grip-horizontal")),
+      menuItem("Mesenchyme", tabName = "mesenchyme", icon = icon("dna"))
       #menuItem("ATAC-seq", tabName = "atacseq", icon = icon("search"))
     )
   ),
   
   dashboardBody(
     useShinyjs(),
+    
+    tags$head(
+      tags$style(HTML("
+        .sidebar-menu > li > a {
+          font-size: 16px !important;
+        }
+        .sidebar-menu .treeview-menu li a {
+          font-size: 14px !important;
+        }
+      "))
+    ),
     
     tabItems(
       tabItem(tabName = "summary",
