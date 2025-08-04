@@ -20,14 +20,22 @@ tab_epitheliumUI <- function(id) {
         display: flex;
         flex-direction: column;
       }
-      .equal-height-row .box {
+      .equal-height-row .box,
+      .equal-height-row .box.box-solid {
         flex: 1;
         display: flex;
         flex-direction: column;
         min-height: 660px;
+        height: 660px;
       }
       .equal-height-row .box .box-body {
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .equal-height-row .box .box-header {
+        flex-shrink: 0;
       }
     ")),
     
@@ -84,17 +92,20 @@ tab_epitheliumUI <- function(id) {
             title = "Study Information", status = "info", solidHeader = TRUE, width = 12,
               div(style = "text-align: left; display: flex; flex-direction: column; height: 100%;",
               div(style = "text-align: center; margin-bottom: 0px;  margin-top: 5px;",
-                img(src = "JID_cover.png", width = "80%", style = "max-width: 100%; margin-bottom: 4px;"),
+                img(src = "JID_cover.png", width = "85%", style = "max-width: 100%; margin-bottom: 4px;"),
+                br(),
                 p(strong("Cover Featured (Imaged by Dr. Qiang Lan)"), style = "margin-bottom: 2px; font-size: 13px;")
                 ),
                 div(style = "margin-top: auto; padding-top: 2px;",
                 p("The study associated with this data has been published. Please refer to the following citation for more details:", 
-                  style = "font-size: 12px; margin-bottom: 0px; text-align: justify;"),
+                  style = "font-size: 13px; margin-bottom: 0px; text-align: justify;"),
+                  br(),
                 p(em("\"Stabilization of Epithelial β-Catenin Compromises Mammary Cell Fate Acquisition and Branching Morphogenesis\""), 
                   " Satta JP, Lan Q, Taketo MM, Mikkola ML. ",
                   a("J Invest Dermatol. 2024;144(6):1223-1237.e10", href = "https://doi.org/10.1016/j.jid.2023.11.018", target = "_blank"),
-                  style = "font-size: 12px; margin-bottom: 2px; font-style: italic; text-align: left;"),
-                p("The data is also available at GEO with accession number ", a("GSE236630", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE236630", target = "_blank"), style = "font-size: 12px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
+                  style = "font-size: 13px; margin-bottom: 2px; font-style: italic; text-align: left;"),
+                br(),
+                p("The data is also available at GEO with accession number ", a("GSE236630", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE236630", target = "_blank"), style = "font-size: 13px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
                 )
               )
           )
