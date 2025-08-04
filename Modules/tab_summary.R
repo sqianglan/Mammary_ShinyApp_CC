@@ -127,6 +127,17 @@ tab_summaryUI <- function(id) {
       )
     ),
     
+    # Copyright section
+    fluidRow(
+      column(12,
+        div(style = "text-align: center; padding: 20px 0; border-top: 1px solid #dee2e6; margin-top: 20px;",
+          p(style = "font-size: 11px; color: #6c757d; margin-bottom: 0px;",
+            "© 2025 Qiang Lan & Marja Mikkola Group. Licensed under BSD 3-Clause License. All rights reserved."
+          )
+        )
+      )
+    )
+    
   )
 }
 
