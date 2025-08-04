@@ -74,7 +74,7 @@ tab_mesenchymeUI <- function(id) {
                 column(4, style = "padding-left: 2px; padding-right: 2px; ",
                 div(style = "display: flex; justify-content: flex-end; align-items: center; gap: 35px; margin-top: 25px;",
                     actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary"),
-                    downloadButton(ns("download_plot"), "Export Plot", icon = icon("download"),
+                    actionButton(ns("export_dialog"), "Export Plot", icon = icon("download"),
                         class = "btn-success", style = "padding: 6px 12px; height: 34px;")
                 )
                 )
@@ -170,30 +170,70 @@ tab_mesenchymeServer <- function(id, parent_session) {
     })
     
     
-    # Download handler for plot export
-    output$download_plot <- downloadHandler(
+    # Export dialog handler
+    observeEvent(input$export_dialog, {
+      if(is.null(current_plot())) {
+        showNotification("Please generate a plot first", type = "warning")
+        return()
+      }
+      
+      # Generate default filename
+      default_filename <- generate_filename()
+      
+      showModal(modalDialog(
+        title = "Export Plot Options",
+        size = "s",
+        fluidRow(
+          column(12,
+            textInput(ns("export_filename"), "Filename (without extension):", 
+                     value = default_filename),
+            br(),
+            selectInput(ns("export_format"), "Format:", 
+                       choices = c("PDF" = "pdf", "PNG" = "png", "JPEG" = "jpeg", "TIFF" = "tiff"),
+                       selected = "pdf"),
+            numericInput(ns("export_width"), "Width (inches):", value = 10, 
+                        min = 1, max = 20, step = 0.5),
+            numericInput(ns("export_height"), "Height (inches):", value = 7, 
+                        min = 1, max = 20, step = 0.5),
+            conditionalPanel(
+              condition = "input.export_format != 'pdf'",
+              ns = ns,
+              numericInput(ns("export_dpi"), "DPI:", value = 300, 
+                          min = 72, max = 600, step = 50)
+            )
+          )
+        ),
+        footer = tagList(
+          modalButton("Cancel"),
+          downloadButton(ns("confirm_export"), "Export", class = "btn-success")
+        )
+      ))
+    })
+    
+  
+    
+    # Modal-based export handler
+    output$confirm_export <- downloadHandler(
       filename = function() {
-        fname <- generate_filename()
-        paste0(fname, ".pdf")
+        filename <- input$export_filename
+        if(is.null(filename) || filename == "") {
+          filename <- generate_filename()
+        }
+        format <- input$export_format
+        paste0(filename, ".", format)
       },
       content = function(file) {
-        # Check if we have a plot to export
-        plot_obj <- current_plot()
-        if (is.null(plot_obj)) {
-          return()
+        removeModal()
+        current_plot_obj <- current_plot()
+        if(!is.null(current_plot_obj)) {
+          width <- ifelse(is.null(input$export_width), 10, input$export_width)
+          height <- ifelse(is.null(input$export_height), 7, input$export_height)
+          format <- ifelse(is.null(input$export_format), "pdf", input$export_format)
+          dpi <- ifelse(format == "pdf" || is.null(input$export_dpi), 300, input$export_dpi)
+          
+          ggsave(file, current_plot_obj, device = format, width = width, height = height, dpi = dpi)
         }
-        
-        # Save the plot as PDF with default settings
-        ggsave(
-          filename = file,
-          plot = plot_obj,
-          device = "pdf",
-          width = 10,
-          height = 7,
-          units = "in"
-        )
-      },
-      contentType = "application/pdf"
+      }
     )
     
     # Test basic button functionality  

@@ -79,7 +79,7 @@ tab_epitheliumUI <- function(id) {
                 column(4, style = "padding-left: 2px; padding-right: 2px; ",
                 div(style = "display: flex; justify-content: flex-end; align-items: center; gap: 35px; margin-top: 25px;",
                     actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary"),
-                    downloadButton(ns("download_plot"), "Export Plot", icon = icon("download"),
+                    actionButton(ns("export_dialog"), "Export Plot", icon = icon("download"),
                         class = "btn-success", style = "padding: 6px 12px; height: 34px;")
                 )
                 )
@@ -162,31 +162,86 @@ tab_epitheliumServer <- function(id, parent_session) {
       return(paste(gene_name, "mammary_epithelium", timestamp, sep = "_"))
     })
     
+    # Export functionality with modal dialog
+    observeEvent(input$export_dialog, {
+      # Check if we have a plot to export
+      if (is.null(plotting_data()) || ("error" %in% names(plotting_data())) || nrow(plotting_data()) == 0) {
+        showNotification("No plot available to export", type = "error", duration = 3)
+        return()
+      }
+      
+      # Get default filename
+      default_filename <- generate_filename()
+      
+      # Show export options modal
+      showModal(modalDialog(
+        title = "Export Plot Options",
+        size = "s",
+        fluidRow(
+          column(12,
+            textInput(ns("export_filename"), "File Name:", value = default_filename),
+            br(),
+            selectInput(ns("export_format"), "File Format:", 
+                       choices = list("PDF" = "pdf", "PNG" = "png", "JPEG" = "jpeg", "TIFF" = "tiff"),
+                       selected = "pdf"),
+            numericInput(ns("export_width"), "Width (inches):", value = 10, min = 1, max = 20, step = 0.5),
+            numericInput(ns("export_height"), "Height (inches):", value = 7, min = 1, max = 20, step = 0.5),
+            conditionalPanel(
+              condition = paste0("input['", ns("export_format"), "'] != 'pdf'"),
+              selectInput(ns("export_dpi"), "Resolution Quality:", 
+                         choices = list(
+                           "Web/Screen (150 DPI)" = 150,
+                           "High Quality (300 DPI)" = 300,
+                           "Publication (600 DPI)" = 600
+                         ),
+                         selected = 300)
+            )
+          )
+        ),
+        footer = tagList(
+          modalButton("Cancel"),
+          downloadButton(ns("download_plot"), "Download", class = "btn-primary")
+        ),
+        easyClose = TRUE
+      ))
+    })
     
     # Download handler for plot export
     output$download_plot <- downloadHandler(
       filename = function() {
-        fname <- generate_filename()
-        paste0(fname, ".pdf")
+        filename <- input$export_filename
+        if(is.null(filename) || filename == "") {
+          filename <- generate_filename()
+        }
+        format <- input$export_format
+        if(is.null(format)) format <- "pdf"
+        paste0(filename, ".", format)
       },
       content = function(file) {
+        removeModal()
         # Check if we have a plot to export
         plot_obj <- current_plot()
         if (is.null(plot_obj)) {
           return()
         }
         
-        # Save the plot as PDF with default settings
+        # Get export options from modal inputs
+        width <- ifelse(is.null(input$export_width), 10, input$export_width)
+        height <- ifelse(is.null(input$export_height), 7, input$export_height)
+        format <- ifelse(is.null(input$export_format), "pdf", input$export_format)
+        dpi <- ifelse(format == "pdf" || is.null(input$export_dpi), 300, as.numeric(input$export_dpi))
+        
+        # Save the plot with user-specified settings
         ggsave(
           filename = file,
           plot = plot_obj,
-          device = "pdf",
-          width = 10,
-          height = 7,
+          device = format,
+          width = width,
+          height = height,
+          dpi = dpi,
           units = "in"
         )
-      },
-      contentType = "application/pdf"
+      }
     )
     
     # Test basic button functionality  
