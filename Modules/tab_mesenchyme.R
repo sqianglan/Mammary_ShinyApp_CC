@@ -84,22 +84,22 @@ tab_mesenchymeUI <- function(id) {
         ),
         column(4, style = "padding-left: 3.5px;",
           box(
-            title = "Study Information", status = "info", solidHeader = TRUE, width = 12, height = "697px",
+            title = "Study Information", status = "info", solidHeader = TRUE, width = 12, height = "600px",
               div(style = "text-align: left; display: flex; flex-direction: column; height: 100%;",
               div(style = "text-align: center; margin-bottom: 0px;  margin-top: 5px;",
                 h4("Sample Preparation", style = "font-weight: bold; color: #337ab7; margin-bottom: 10px; text-align: center;"),
-                img(src = "mesenchyme_sample_workflow.png", width = "100%", style = "max-width: 100%; margin-bottom: 4px;padding-top: 30px;")
+                img(src = "mesenchyme_sample_workflow.png", width = "100%", style = "max-width: 100%; margin-bottom: 4px;padding-top: 20px;")
                 ),
                 div(style = "margin-top: auto; padding-top: 2px;",
                 p("The study associated with this data has been published. Please refer to the following citation for more details:", 
-                  style = "font-size: 14px; margin-bottom: 0px; text-align: justify;"),
+                  style = "font-size: 13px; margin-bottom: 0px; text-align: justify;"),
                 br(),
                 p(em("\"Mesenchyme instructs growth while epithelium directs branching in the mouse mammary gland\""), 
                   " Lan Q, Trela E, Lindström R, Satta JP, Kaczyńska B, Christensen MM, Holzenberger M, Jernvall J, Mikkola ML. ",
                   a("eLife. 2024;13:e93326", href = "https://doi.org/10.7554/eLife.93326", target = "_blank"),
-                  style = "font-size: 14px; margin-bottom: 2px; font-style: italic; text-align: left;"),
+                  style = "font-size: 13px; margin-bottom: 2px; font-style: italic; text-align: left;"),
                 br(),
-                p("The data is also available at GEO with accession number ", a("GSE225821", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE225821", target = "_blank"), style = "font-size: 14px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
+                p("The data is also available at GEO with accession number ", a("GSE225821", href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE225821", target = "_blank"), style = "font-size: 13px; margin-bottom: 5px; margin-top: 0px; text-align: left;")
                 )
               )
           )
@@ -263,13 +263,14 @@ tab_mesenchymeServer <- function(id, parent_session) {
             
             selected_export_dir(chosen_dir)
           }
-        } else {
-          # Use utils::choose.dir() for Windows/Linux
+        } else if (Sys.info()["sysname"] == "Windows") {
           chosen_dir <- utils::choose.dir(default = selected_export_dir(), caption = "Select Export Directory")
           
           if (!is.null(chosen_dir) && chosen_dir != "") {
             selected_export_dir(chosen_dir)
           }
+        } else {
+          showNotification("Directory selection is not supported on this system. Using default directory.", type = "warning", duration = 3)
         }
       }, error = function(e) {
         showNotification(

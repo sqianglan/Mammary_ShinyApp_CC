@@ -256,13 +256,20 @@ tab_epitheliumServer <- function(id, parent_session) {
             
             selected_export_dir(chosen_dir)
           }
-        } else {
-          # Use utils::choose.dir() for Windows/Linux
+        } else if (Sys.info()["sysname"] == "Windows") {
+          # Use utils::choose.dir() for Windows only
           chosen_dir <- utils::choose.dir(default = selected_export_dir(), caption = "Select Export Directory")
           
           if (!is.null(chosen_dir) && chosen_dir != "") {
             selected_export_dir(chosen_dir)
           }
+        } else {
+          # For Linux and other systems, show a notification
+          showNotification(
+            "Directory selection is not supported on this system. Files will be saved to the default directory.",
+            type = "warning",
+            duration = 5
+          )
         }
       }, error = function(e) {
         showNotification(
