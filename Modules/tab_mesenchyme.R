@@ -88,7 +88,7 @@ tab_mesenchymeUI <- function(id) {
               div(style = "text-align: left; display: flex; flex-direction: column; height: 100%;",
               div(style = "text-align: center; margin-bottom: 0px;  margin-top: 5px;",
                 h4("Sample Preparation", style = "font-weight: bold; color: #337ab7; margin-bottom: 10px; text-align: center;"),
-                img(src = "mesenchyme_sample_workflow.png", width = "100%", style = "max-width: 100%; margin-bottom: 4px;padding-top: 20px;")
+                img(src = "mesenchyme_sample_workflow.png", width = "100%", style = "max-width: 100%; margin-bottom: 4px;padding-top: 10px;")
                 ),
                 div(style = "margin-top: auto; padding-top: 2px;",
                 p("The study associated with this data has been published. Please refer to the following citation for more details:", 
