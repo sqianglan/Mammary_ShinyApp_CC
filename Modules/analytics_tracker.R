@@ -217,6 +217,9 @@ log_visitor <- function(session, use_github = TRUE) {
       message("Failed to log to GitHub, falling back to local storage")
       use_github <- FALSE
     }
+  } else {
+    # GitHub not available, use local storage
+    use_github <- FALSE
   }
   
   if (!use_github) {

@@ -78,12 +78,12 @@ tab_summaryUI <- function(id) {
     
     fluidRow(
       box(
-        title = "Epithelium Dataset Summary (Satta et al.)", status = "info", solidHeader = TRUE, width = 6,
+        title = "Epithelium Dataset Summary (Satta et al.)", status = "info", solidHeader = TRUE,  height = 300, width = 6,
         tableOutput(ns("epithelium_summary"))
       ),
       
       box(
-        title = "Mesenchyme Dataset Summary (Lan et al.)", status = "info", solidHeader = TRUE, width = 6,
+        title = "Mesenchyme Dataset Summary (Lan et al.)", status = "info", solidHeader = TRUE, height = 300, width = 6,
         tableOutput(ns("mesenchyme_summary"))
       )
     ),
