@@ -79,7 +79,7 @@ tab_epitheliumUI <- function(id) {
                 column(4, style = "padding-left: 2px; padding-right: 2px; ",
                 div(style = "display: flex; justify-content: flex-end; align-items: center; gap: 35px; margin-top: 25px;",
                     actionButton(ns("update_plot"), "Search & Update Plot", class = "btn-primary"),
-                    actionButton(ns("export_dialog"), "Export Plot", icon = icon("download"), 
+                    downloadButton(ns("download_plot"), "Export Plot", icon = icon("download"),
                         class = "btn-success", style = "padding: 6px 12px; height: 34px;")
                 )
                 )
@@ -162,198 +162,32 @@ tab_epitheliumServer <- function(id, parent_session) {
       return(paste(gene_name, "mammary_epithelium", timestamp, sep = "_"))
     })
     
-    # Export functionality with simple modal dialog
-    observeEvent(input$export_dialog, {
-      # Check if we have a plot to export
-      if (is.null(plotting_data()) || ("error" %in% names(plotting_data())) || nrow(plotting_data()) == 0) {
-        showNotification("No plot available to export", type = "error", duration = 3)
-        return()
-      }
-      
-      # Get default filename
-      default_filename <- generate_filename()
-      
-      # Show export options modal
-      showModal(modalDialog(
-        title = "Export Plot",
-        size = "s",
-        fluidRow(
-          column(12,
-            textInput(ns("export_filename"), "File Name:", value = default_filename),
-            br(),
-            actionButton(ns("choose_directory"), "Choose Directory", icon = icon("folder-open"), class = "btn-info"),
-            br(),
-            textOutput(ns("selected_directory")),
-            br(),
-            selectInput(ns("export_format"), "File Format:", 
-                       choices = list("PDF" = "pdf", "PNG" = "png", "JPEG" = "jpeg", "TIFF" = "tiff"),
-                       selected = "pdf"),
-            numericInput(ns("export_width"), "Width (inches):", value = 8, min = 1, max = 20, step = 0.5),
-            numericInput(ns("export_height"), "Height (inches):", value = 6, min = 1, max = 20, step = 0.5),
-            conditionalPanel(
-              condition = paste0("input['", ns("export_format"), "'] != 'pdf'"),
-              selectInput(ns("export_dpi"), "Resolution Quality:", 
-                         choices = list(
-                           "Web/Screen (150 DPI)" = 150,
-                           "High Quality (300 DPI)" = 300,
-                           "Publication (600 DPI)" = 600,
-                           "Custom" = "custom"
-                         ),
-                         selected = 300),
-              conditionalPanel(
-                condition = paste0("input['", ns("export_dpi"), "'] == 'custom'"),
-                numericInput(ns("export_dpi_custom"), "Custom DPI:", value = 300, min = 72, max = 1200, step = 50)
-              )
-            )
-          )
-        ),
-        footer = tagList(
-          modalButton("Cancel"),
-          actionButton(ns("export_save"), "Save Plot", class = "btn-primary")
-        ),
-        easyClose = TRUE
-      ))
-    })
     
-    # Handle directory selection
-    observeEvent(input$choose_directory, {
-      tryCatch({
-        if (Sys.info()["sysname"] == "Darwin") {  # macOS
-          # Use AppleScript to choose folder on macOS
-          script <- 'choose folder with prompt "Choose Export Directory"'
-          
-          result <- system(paste0('osascript -e \'', script, '\''), intern = TRUE)
-          
-          if (length(result) > 0 && result != "" && !grepl("User canceled", result)) {
-            chosen_dir <- trimws(result)
-            
-            # Clean up the AppleScript result
-            if (startsWith(chosen_dir, "alias ")) {
-              chosen_dir <- substring(chosen_dir, 7)  # Remove "alias " prefix
-            }
-            
-            # Convert from HFS path to POSIX path
-            if (grepl(":", chosen_dir)) {
-              # This is an HFS path, convert to POSIX
-              # Remove "Macintosh HD:" prefix if present and replace colons with slashes
-              if (startsWith(chosen_dir, "Macintosh HD:")) {
-                chosen_dir <- substring(chosen_dir, 14)  # Remove "Macintosh HD:" prefix
-              }
-              
-              # Replace all colons with forward slashes
-              chosen_dir <- gsub(":", "/", chosen_dir)
-              
-              # Add leading slash to make it absolute
-              if (!startsWith(chosen_dir, "/")) {
-                chosen_dir <- paste0("/", chosen_dir)
-              }
-              
-              # Remove trailing slash if present
-              if (endsWith(chosen_dir, "/") && nchar(chosen_dir) > 1) {
-                chosen_dir <- substring(chosen_dir, 1, nchar(chosen_dir) - 1)
-              }
-            }
-            
-            selected_export_dir(chosen_dir)
-          }
-        } else if (Sys.info()["sysname"] == "Windows") {
-          # Use utils::choose.dir() for Windows only
-          chosen_dir <- utils::choose.dir(default = selected_export_dir(), caption = "Select Export Directory")
-          
-          if (!is.null(chosen_dir) && chosen_dir != "") {
-            selected_export_dir(chosen_dir)
-          }
-        } else {
-          # For Linux and other systems, show a notification
-          showNotification(
-            "Directory selection is not supported on this system. Files will be saved to the default directory.",
-            type = "warning",
-            duration = 5
-          )
-        }
-      }, error = function(e) {
-        showNotification(
-          paste("Directory selection failed:", e$message),
-          type = "warning",
-          duration = 3
-        )
-      })
-    })
-    
-    # Display selected directory
-    output$selected_directory <- renderText({
-      paste("Save to:", selected_export_dir())
-    })
-    
-    # Handle the actual save operation
-    observeEvent(input$export_save, {
-      tryCatch({
-        # Get current plot from reactive value
+    # Download handler for plot export
+    output$download_plot <- downloadHandler(
+      filename = function() {
+        fname <- generate_filename()
+        paste0(fname, ".pdf")
+      },
+      content = function(file) {
+        # Check if we have a plot to export
         plot_obj <- current_plot()
-        
         if (is.null(plot_obj)) {
-          showNotification("No plot to export", type = "error", duration = 3)
           return()
         }
         
-        # Get export settings from modal inputs
-        filename <- input$export_filename
-        format <- input$export_format
-        width <- input$export_width
-        height <- input$export_height
-        
-        # Handle DPI selection (only for non-PDF formats)
-        dpi <- if (format != "pdf") {
-          if (input$export_dpi == "custom") {
-            input$export_dpi_custom
-          } else {
-            as.numeric(input$export_dpi)
-          }
-        } else {
-          300  # Default for PDF (not used)
-        }
-        
-        # Create full file path using selected directory
-        full_path <- file.path(selected_export_dir(), paste0(filename, ".", format))
-        
-        # Save the currently displayed plot with format-specific parameters
-        if (format == "pdf") {
-          ggsave(
-            filename = full_path,
-            plot = plot_obj,
-            device = format,
-            width = width,
-            height = height,
-            units = "in"
-          )
-        } else {
-          ggsave(
-            filename = full_path,
-            plot = plot_obj,
-            device = format,
-            width = width,
-            height = height,
-            units = "in",
-            dpi = dpi
-          )
-        }
-        
-        # Close modal and show success message
-        removeModal()
-        showNotification(
-          paste("Plot saved successfully to:", full_path),
-          type = "message",
-          duration = 5
+        # Save the plot as PDF with default settings
+        ggsave(
+          filename = file,
+          plot = plot_obj,
+          device = "pdf",
+          width = 10,
+          height = 7,
+          units = "in"
         )
-        
-      }, error = function(e) {
-        showNotification(
-          paste("Export failed:", e$message),
-          type = "error",
-          duration = 5
-        )
-      })
-    })
+      },
+      contentType = "application/pdf"
+    )
     
     # Test basic button functionality  
     observeEvent(input$update_plot, {
@@ -374,7 +208,7 @@ tab_epitheliumServer <- function(id, parent_session) {
             tags$div(
               tags$h4("Loading Data", style = "margin: 0 0 6px 0; font-weight: bold; color: #337ab7;"),
               tags$p(
-                "Loading Epithelium RNAseq data... Please wait while we prepare the gene expression data.",
+                "Loading Epithelium RNAseq data... Please wait...",
                 style = "font-size: 16px; margin: 0; color: #333;"
               )
             )
